@@ -1,42 +1,129 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+.nav-image {
+  transition: filter 0.3s ease;
+  filter: brightness(2.5) saturate(2.5) contrast(1.5);
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.nav-image:hover {
+  filter: brightness(4) saturate(3.5) contrast(2.2);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.styled-list li {
+  padding-left: 0;
+  margin-left: 0;
+  margin-bottom: 0.5em;
+  text-indent: 0;
+}
+
+.band-box {
+  max-width: 600px;
+  outline: 1px solid white;
+  margin: 20px 0;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.band-box h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.band-box p {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.band-box ul {
+  list-style-position: outside;
+  padding-left: 1.2em;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.band-box ul li {
+  margin-bottom: 0.3em;
+}
+
+.band-box a {
+  color: lightblue;
+  text-decoration: none;
+}
+
+.band-box a:hover {
+  color: lightgreen;
+}
+
+.band-img {
+  max-height: 400px;
+  max-width: 450px;
+  width: auto;
+  height: auto;
+  display: block;
+  margin-top: auto;
+}
+
+.contact-link {
+  color: lightgreen;
+  text-decoration: none;
+}
+
+.contact-link:hover {
+  color: lightblue;
+}
+
+.contact-page a {
+  color: lightblue;
+  text-decoration: none;
+}
+
+.contact-page a:hover {
+  color: lightgreen;
+}
+
+.main-logo {
+  filter: brightness(3) saturate(2.5) contrast(1.5);
+}
+
+.logo-buttons-container {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 30px;
+  justify-content: center;
+  width: 100%;
+  max-width: 900px;
+  margin-left: 30px;
+}
+
+.nav-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  margin-top: 40px;
+}
+
+/* Medium screens: buttons go below logo */
+@media (max-width: 900px) {
+  .logo-buttons-container {
+    flex-direction: column;
+    align-items: center;
   }
-  to {
-    transform: rotate(360deg);
+  
+  .nav-buttons {
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+    margin-top: 0;
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+/* Small screens: each button on its own line */
+@media (max-width: 600px) {
+  .nav-buttons {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
   }
 }
 
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
