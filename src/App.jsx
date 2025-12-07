@@ -1,16 +1,16 @@
 import { Routes, Route } from 'react-router-dom'
 import Root from './Root'
-import Portfolio from './Portfolio'
+import Projects from './Projects'
 import Music from './Music'
-import Contact from './Contact'
+import Socials from './Socials'
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Root />} />
-      <Route path="/portfolio" element={<Portfolio />} />
+      <Route path="/projects" element={<Projects />} />
       <Route path="/music" element={<Music />} />
-      <Route path="/contact" element={<Contact />} />
+      <Route path="/socials" element={<Socials />} />
     </Routes>
   )
 }
