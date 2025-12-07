@@ -22,7 +22,7 @@
 }
 
 .band-box {
-  max-width: 450px;
+  max-width: 350px;
   outline: 1px solid white;
   margin: 0;
   padding: 10px;
@@ -63,12 +63,12 @@
 }
 
 .band-img {
-  max-height: 400px;
-  max-width: 450px;
+  max-height: 300px;
+  max-width: 350px;
   width: auto;
   height: auto;
   display: block;
-  margin-top: auto;
+  margin: auto;
 }
 
 .contact-link {
@@ -184,9 +184,34 @@
 .nav-button-group {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   gap: 15px;
   justify-content: center;
   align-items: center;
+}
+
+.nav-button-img {
+  max-width: 150px;
+  height: auto;
+  transition: filter 0.3s ease;
+  filter: brightness(4) saturate(3) contrast(2);
+  cursor: pointer;
+}
+
+.nav-button-img:hover {
+  filter: brightness(5) saturate(3.5) contrast(2.2);
+}
+
+.nav-button-img-active {
+  filter: brightness(6) saturate(4) contrast(2.5);
+}
+
+.nav-button-img-music {
+  max-width: 130px;
+}
+
+.nav-button-img-about {
+  max-width: 130px;
 }
 
 .square-nav-button {
