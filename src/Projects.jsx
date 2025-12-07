@@ -23,7 +23,7 @@ function Projects() {
         Object.values(parentRecordMap.block || {}).forEach(block => {
           if (block.value?.type === 'child_page') {
             extractedPageIds.push(block.value.id)
-          }
+          } 
         })
 
         setPageIds(extractedPageIds)
