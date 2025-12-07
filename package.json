@@ -10,11 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "notion-client": "^7.7.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-notion": "^0.10.0",
-    "react-notion-x": "^7.7.1",
     "react-router-dom": "^7.10.1"
   },
   "devDependencies": {
