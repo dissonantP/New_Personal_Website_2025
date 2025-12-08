@@ -10,7 +10,7 @@ const projects = [
     description: 'I wrote over 40 webscrapers to make this daily concert listing website.',
   },
   {
-    name: 'Shader-Web',
+    name: 'Shader-Web', 
     url: 'https://shader-web.dissonant.info/',
     thumbnail: './projects/shader-web.png',
     thumbnailType: 'image',
@@ -36,12 +36,12 @@ const projects = [
     thumbnailType: 'image',
     description: 'Custom video streaming application (access by request)',
   },
-  {
-    name: 'Jellyfin',
-    thumbnail: './projects/jellyfin.png',
-    thumbnailType: 'image',
-    description: 'Enhanced media streaming with improved UI and smart TV support (access by request)',
-  },
+  // {
+  //   name: 'Jellyfin',
+  //   thumbnail: './projects/jellyfin.png',
+  //   thumbnailType: 'image',
+  //   description: 'Enhanced media streaming with improved UI and smart TV support (access by request)',
+  // },
   {
     name: 'P5 Playground',
     url: 'https://maxpleaner.github.io/p5_playground',
