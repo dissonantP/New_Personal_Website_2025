@@ -1,3 +1,20 @@
+@font-face {
+  font-family: 'Modeseven';
+  src: url('./Modeseven-L3n5.ttf') format('truetype');
+}
+
+body {
+  margin: 0;
+  background-color: black;
+  font-family: 'Modeseven', sans-serif;
+  color: white;
+}
+
+#root {
+  margin: 0;
+  background-color: black;
+}
+
 .nav-image {
   transition: filter 0.3s ease;
   filter: brightness(2.5) saturate(2.5) contrast(1.5);
