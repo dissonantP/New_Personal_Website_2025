@@ -1,4 +1,4 @@
-import { ProjectCard } from './Projects/ProjectCard'
+import { ProjectCard, GAP_SPACE } from './Projects/ProjectCard'
 import '../App.css'
 
 const projects = [
@@ -67,8 +67,8 @@ const projects = [
 
 function Projects() {
   return (
-    <div style={{ width: '100%', marginTop: '30px', paddingLeft: '15px', paddingRight: '15px' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, 300px)', gap: '40px', justifyContent: 'center' }}>
+    <div style={{ width: '100%', marginTop: '40px', paddingLeft: '15px', paddingRight: '15px', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: GAP_SPACE, justifyContent: 'center', maxWidth: '1400px' }}>
         {projects.map((project) => (
           <ProjectCard key={project.name} project={project} />
         ))}
