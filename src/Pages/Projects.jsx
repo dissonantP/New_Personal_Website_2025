@@ -3,15 +3,15 @@ import '../App.css'
 
 const projects = [
   {
-    name: 'Bay Area Shows',
+    name: 'bayareashows.org',
     url: 'https://bayareashows.org',
     thumbnail: './projects/bay-area-shows.png',
     thumbnailType: 'image',
     description: 'Over 40 web scrapers running daily to fetch local concert listings.',
   },
   {
-    name: 'Shader-Web', 
-    url: 'https://shader-web.dissonant.info/',
+    name: 'Shader-Web',
+    url: 'https://maxpleaner.github.io/ShaderWeb/',
     thumbnail: './projects/shader-web.png',
     thumbnailType: 'image',
     description: 'A sandbox for writing camera effects in GLSL',
