@@ -9,7 +9,7 @@ function Socials() {
             <a href="mailto:maxpleaner@gmail.com?subject=Contact from dissonant.info" className="contact-link">Email</a>
           </li>
           <li style={{ marginBottom: '15px' }}>
-            <a href="https://linkedin.in/maxpleaner" target="_blank" rel="noopener noreferrer" className="contact-link">LinkedIn</a>
+            <a href="https://linkedin.com/in/maxpleaner" target="_blank" rel="noopener noreferrer" className="contact-link">LinkedIn</a>
           </li>
           <li style={{ marginBottom: '15px' }}>
             <a href="https://www.instagram.com/macskamz/" target="_blank" rel="noopener noreferrer" className="contact-link">Instagram</a>
