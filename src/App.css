@@ -3,9 +3,19 @@
   src: url('./Modeseven-L3n5.ttf') format('truetype');
 }
 
+:root {
+  --brightness: 2;
+  --brightness-hover: 2;
+  --brightness-active: 2;
+  --brightness-active-hover: 2;
+  --brightness-logo: 3;
+  --saturate: 2.5;
+  --contrast: 1.5;
+}
+
 body {
   margin: 0;
-  background-color: black;
+  background-color: black;  
   font-family: 'Modeseven', sans-serif;
   color: white;
 }
@@ -17,11 +27,11 @@ body {
 
 .nav-image {
   transition: filter 0.3s ease;
-  filter: brightness(2.5) saturate(2.5) contrast(1.5);
+  filter: brightness(var(--brightness)) saturate(var(--saturate)) contrast(var(--contrast));
 }
 
 .nav-image:hover {
-  filter: brightness(4) saturate(3.5) contrast(2.2);
+  filter: brightness(var(--brightness-hover)) saturate(var(--saturate)) contrast(var(--contrast));
 }
 
 .styled-list li {
@@ -39,14 +49,13 @@ body {
 }
 
 .band-box {
-  max-width: 350px;
+  width: 350px;
   outline: 1px solid white;
   margin: 0;
   padding: 10px;
   display: flex;
   flex-direction: column;
-  flex: 1 1 calc(33.333% - 20px);
-  min-width: 300px;
+  flex-shrink: 0;
 }
 
 .band-box h3 {
@@ -107,14 +116,14 @@ body {
 }
 
 .main-logo {
-  filter: brightness(3) saturate(2.5) contrast(1.5);
+  filter: brightness(var(--brightness-logo)) saturate(var(--saturate)) contrast(var(--contrast));
 }
 
 .page-header-img {
   max-width: 300px;
   width: 100%;
   height: auto;
-  filter: brightness(4) saturate(3) contrast(2);
+  filter: brightness(var(--brightness-hover)) saturate(var(--saturate)) contrast(var(--contrast));
 }
 
 .logo-buttons-container {
@@ -175,11 +184,11 @@ body {
   height: auto;
   border-radius: 6px;
   transition: filter 0.3s ease;
-  filter: brightness(2.5) saturate(2.5) contrast(1.5);
+  filter: brightness(var(--brightness)) saturate(var(--saturate)) contrast(var(--contrast));
 }
 
 .bottom-nav-image:hover {
-  filter: brightness(4) saturate(3.5) contrast(2.2);
+  filter: brightness(var(--brightness-hover)) saturate(var(--saturate)) contrast(var(--contrast));
 }
 
 .contact-button {
@@ -210,17 +219,25 @@ body {
 .nav-button-img {
   max-width: 150px;
   height: auto;
-  transition: filter 0.3s ease;
-  filter: brightness(4) saturate(3) contrast(2);
+  transition: brightness 0.3s ease, saturate 0.3s ease, contrast 0.3s ease;
+  filter: brightness(var(--brightness-active)) saturate(var(--saturate)) contrast(var(--contrast));
   cursor: pointer;
+  will-change: filter;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-.nav-button-img:hover {
-  filter: brightness(5) saturate(3.5) contrast(2.2);
+.nav-button-img:hover:not(.nav-button-img-active) {
+  filter: brightness(var(--brightness-active)) saturate(var(--saturate)) contrast(var(--contrast)) hue-rotate(90deg);
 }
 
 .nav-button-img-active {
-  filter: brightness(6) saturate(4) contrast(2.5);
+  filter: brightness(var(--brightness-active)) saturate(var(--saturate)) contrast(var(--contrast));
+}
+
+.nav-button-img-active:hover {
+  filter: brightness(var(--brightness-active-hover)) saturate(var(--saturate)) contrast(var(--contrast)) hue-rotate(90deg);
 }
 
 .nav-button-img-music {
