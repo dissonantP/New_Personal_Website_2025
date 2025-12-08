@@ -7,7 +7,7 @@ const projects = [
     url: 'https://bayareashows.org',
     thumbnail: './projects/bay-area-shows.png',
     thumbnailType: 'image',
-    description: 'I wrote over 40 webscrapers to make this daily concert listing website.',
+    description: 'Over 40 web scrapers running daily to fetch local concert listings.',
   },
   {
     name: 'Shader-Web', 
