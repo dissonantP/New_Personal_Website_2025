@@ -11,7 +11,7 @@ function Music() {
           <li><a href="https://halfrottengoddess.bandcamp.com/album/half-rotten-goddess" target="_blank" rel="noopener noreferrer">Bandcamp</a></li>
           <li><a href="https://www.instagram.com/halfrottengoddess/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
         </ul>
-        <img src="/hrg.jpeg" alt="Half Rotten Goddess" className="band-img" />
+        <img src="./hrg.jpeg" alt="Half Rotten Goddess" className="band-img" />
       </div>
 
       <div className="band-box">
@@ -22,7 +22,7 @@ function Music() {
           <li><a href="https://weedian420.bandcamp.com/track/war-of-knives-holy-conquest" target="_blank" rel="noopener noreferrer">Track on "California Sludge" comp</a></li>
           <li><a href="https://www.instagram.com/warofknives/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
         </ul>
-        <img src="/wok2.png" alt="War of Knives" className="band-img" />
+        <img src="./wok2.png" alt="War of Knives" className="band-img" />
       </div>
 
       <div className="band-box">
@@ -31,7 +31,7 @@ function Music() {
         <ul style={{ listStyle: 'none' }}>
           <li><a href="https://dissonant-protean.bandcamp.com" target="_blank" rel="noopener noreferrer">Bandcamp</a></li>
         </ul>
-        <img src="/protean.jpg" alt="Dissonant Protean" className="band-img" />
+        <img src="./protean.jpg" alt="Dissonant Protean" className="band-img" />
       </div>
       </div>
     </div>
