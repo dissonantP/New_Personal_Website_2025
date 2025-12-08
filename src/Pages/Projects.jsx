@@ -68,7 +68,7 @@ const projects = [
 function Projects() {
   return (
     <div style={{ width: '100%', marginTop: '30px', paddingLeft: '15px', paddingRight: '15px' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', justifyItems: 'center' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, 300px)', gap: '40px', justifyContent: 'center' }}>
         {projects.map((project) => (
           <ProjectCard key={project.name} project={project} />
         ))}
