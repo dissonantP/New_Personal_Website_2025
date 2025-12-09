@@ -234,7 +234,7 @@ body {
 }
 
 .nav-button-img-active {
-  filter: brightness(var(--brightness-active)) saturate(var(--saturate)) contrast(var(--contrast));
+  filter: brightness(var(--brightness-active)) saturate(var(--saturate)) contrast(var(--contrast)) hue-rotate(90deg);
 }
 
 .nav-button-img-active:hover {
