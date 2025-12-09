@@ -18,10 +18,10 @@ const projects = [
   },
   {
     name: 'Sticker Layout',
-    url: 'https://maxpleaner.com/sticker_layout.html',
+    url: 'https://maxpleaner.github.io/StickerLayout',
     thumbnail: './projects/sticker-layout.png',
     thumbnailType: 'image',
-    description: 'A handy utility for laying out images in a printable grid with configurable sizes and margins.',
+    description: 'A utility for laying out images in a grid (useful for printing stickers).',
   },
   {
     name: 'Spotify-Explorer',
