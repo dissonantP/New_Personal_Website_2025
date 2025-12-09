@@ -14,7 +14,7 @@ const projects = [
     url: 'https://maxpleaner.github.io/ShaderWeb/',
     thumbnail: './projects/shader-web.png',
     thumbnailType: 'image',
-    description: 'A sandbox for writing camera effects in GLSL',
+    description: 'A web sandbox for writing camera effects in GLSL. The associated mobile app is WIP.',
   },
   {
     name: 'Sticker Layout',

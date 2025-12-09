@@ -211,7 +211,8 @@ body {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 15px;
+  column-gap: 10px;
+  row-gap: 2px;
   justify-content: center;
   align-items: center;
 }
@@ -267,4 +268,3 @@ body {
   border-color: lightblue;
   background-color: rgba(173, 216, 230, 0.1);
 }
-
