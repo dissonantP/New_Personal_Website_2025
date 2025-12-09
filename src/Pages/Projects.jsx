@@ -33,8 +33,9 @@ const projects = [
   {
     name: 'Video Streamer',
     thumbnail: './projects/video-streamer.png',
+    url: 'https://github.com/maxpleaner/VideoStreamer',
     thumbnailType: 'image',
-    description: 'Custom video streaming application (access by request)',
+    description: 'A video streaming app similar to Jellyfin or Plex',
   },
   // {
   //   name: 'Jellyfin',
