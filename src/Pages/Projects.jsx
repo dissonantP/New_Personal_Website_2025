@@ -23,13 +23,13 @@ const projects = [
     thumbnailType: 'image',
     description: 'A utility for laying out images in a grid (useful for printing stickers).',
   },
-  {
-    name: 'Spotify-Explorer',
-    url: 'https://spotify-explorer.dissonant.info/',
-    thumbnail: './projects/spotify-explorer.png',
-    thumbnailType: 'image',
-    description: 'A resource for music nerds; all the obscure genres you could wish for. I scraped Spotify for all the \'Sound of\' playlists and listed them here.',
-  },
+  // {
+  //   name: 'Spotify-Explorer',
+  //   url: 'https://spotify-explorer.dissonant.info/',
+  //   thumbnail: './projects/spotify-explorer.png',
+  //   thumbnailType: 'image',
+  //   description: 'A resource for music nerds; all the obscure genres you could wish for. I scraped Spotify for all the \'Sound of\' playlists and listed them here.',
+  // },
   {
     name: 'Video Streamer',
     thumbnail: './projects/video-streamer.png',
@@ -63,11 +63,19 @@ const projects = [
     thumbnailType: 'image',
     description: 'Browser-based pinball game created in P5.js',
   },
+
+  // TODOS
+  // - Spotify Interface
+  // - Image Manipulator Mcp
+  // - Headless Houdini Generator
+  // - Touch Designer Projects
+  // - Houdini Projects
+  // - Blog Posts
 ]
 
 function Projects() {
   return (
-    <div style={{ width: '100%', marginTop: '40px', paddingLeft: '15px', paddingRight: '15px', display: 'flex', justifyContent: 'center' }}>
+    <div style={{ width: '100%', marginTop: '15px', paddingLeft: '15px', paddingRight: '15px', display: 'flex', justifyContent: 'center' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: GAP_SPACE, justifyContent: 'center', maxWidth: '1400px' }}>
         {projects.map((project) => (
           <ProjectCard key={project.name} project={project} />

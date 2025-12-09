@@ -32,9 +32,9 @@ function App() {
   }
 
   return (
-    <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingLeft: '15px', paddingRight: '30px', paddingBottom: '100px' }}>
+    <div style={{ marginTop: '5px', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingLeft: '15px', paddingRight: '30px', paddingBottom: '100px' }}>
       <img src="./maxpleaner_logo_split.png" alt="Max Pleaner" className="main-logo" style={{ maxWidth: '400px', width: '100%', height: 'auto' }} />
-      <div style={{ width: '100%', maxWidth: '900px', marginTop: '20px', marginBottom: '0px', paddingBottom: '40px', borderBottom: '1px solid rgba(255, 255, 255, 0.3)' }}>
+      <div style={{ width: '100%', maxWidth: '900px', marginTop: '5px', marginBottom: '0px', paddingBottom: '10px', borderBottom: '1px solid rgba(255, 255, 255, 0.3)' }}>
         <div className="nav-button-group">
           <button onClick={() => handlePageChange('about')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
             <img src="./about.png" alt="About" className={`nav-button-img nav-button-img-about ${currentPage === 'about' ? 'nav-button-img-active' : ''}`} />
