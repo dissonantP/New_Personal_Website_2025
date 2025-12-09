@@ -1,5 +1,5 @@
 const CARD_WIDTH = '300px'
-const CARD_HEIGHT = '291px'
+const CARD_HEIGHT = '290px'
 const IMAGE_HEIGHT = '200px'
 const TITLE_MARGIN_BOTTOM = '12px'
 const IMAGE_MARGIN_BOTTOM = '9px'
