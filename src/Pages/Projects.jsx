@@ -11,7 +11,8 @@ const projectSections = [
         url: 'https://bayareashows.org',
         thumbnail: './projects/bay-area-shows.png',
         thumbnailType: 'image',
-        description: 'Over 40 web scrapers running daily to fetch local concert listings.',
+        fontSize: '0.89em',
+        description: 'Over 40 scrapers run daily to fetch local concert listings. Integrated AI fetches concert details.',
       },
       {
         name: 'Shader-Web',
@@ -108,6 +109,20 @@ const projectSections = [
         thumbnailType: 'image',
         description: "An in-depth guide to scripting in Houdini's new compositing system.",
       },
+      {
+        name: "Combine Textures",
+        url: "https://loving-snowstorm-ec0.notion.site/houdini-tools?v=1b7832ab6c5a80ae8702000c474aabb1",
+        thumbnail: './projects/houdini-combine-textures.png',
+        thumbnailType: 'image',
+        description: 'Combine textures to a single atlas, so you can use a single shader to render.',
+      },
+      {
+        name: "Font Creation Tutorial",
+        url: "https://www.youtube.com/watch?v=VJCSX4mJols",
+        thumbnail: './projects/houdini-font-creation.jpg',
+        thumbnailType: 'image',
+        description: 'A tutorial on creating custom fonts in Houdini.',
+      }
     ]
   },
   {
@@ -127,6 +142,39 @@ const projectSections = [
         thumbnailType: 'image',
         description: 'Some hacks for audio / MIDI routing using VCV Rack VST in Ableton.',
       }
+    ]
+  },
+  {
+    title: 'Touch Designer',
+    projects: [
+      {
+        name: "Movie Sampler",
+        url: "https://loving-snowstorm-ec0.notion.site/touch-designer?v=1b9832ab6c5a808b86d7000c0d3f5201",
+        thumbnail: './projects/touchdesigner-movie-sampler.png',
+        thumbnailType: 'image',
+        description: 'A movie player with scrub controls, looping, and the ability to extract clips.',
+      },
+      {
+        name: "Video Composition System",
+        url: "https://loving-snowstorm-ec0.notion.site/touch-designer?v=1b9832ab6c5a808b86d7000c0d3f5201",
+        thumbnail: './projects/touchdesigner-video-composition.png',
+        thumbnailType: 'image',
+        description: 'A framework for switching clips or effects and sequencing changes.',
+      },
+      {
+        name: "Shadertoy Importer",
+        url: "https://loving-snowstorm-ec0.notion.site/touch-designer?v=1b9832ab6c5a808b86d7000c0d3f5201",
+        thumbnail: './projects/touchdesigner-shadertoy-importer.png',
+        thumbnailType: 'image',
+        description: 'A fork of td-shadertoy which has less boilerplate. Imports shaders from Shadertoy.',
+      },
+      {
+        name: "Feedback Effects Tutorial",
+        url: "https://www.youtube.com/watch?v=QCq0x7-Kt3o",
+        thumbnail: './projects/touchdesigner-feedback.jpg',
+        thumbnailType: 'image',
+        description: 'Intro to feedback in Shadertoy and Touch Designer (plus a cool dilation effect).',
+      },
     ]
   }
 ]

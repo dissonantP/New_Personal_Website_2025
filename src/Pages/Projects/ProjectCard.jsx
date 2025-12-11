@@ -18,7 +18,18 @@ export function ProjectCard({ project }) {
             <img src={project.thumbnail} alt={project.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
         )}
-        <p style={{ marginTop: 0, marginBottom: 0, color: 'white', flex: '1 1 auto', overflow: 'hidden' }}>{project.description}</p>
+        <p
+          style={{
+            marginTop: 0,
+            marginBottom: 0,
+            color: 'white',
+            flex: '1 1 auto',
+            overflow: 'hidden',
+            fontSize: project.fontSize || undefined
+          }}
+        >
+          {project.description}
+        </p>
       </div>
     </a>
   )
