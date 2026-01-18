@@ -26,8 +26,8 @@ function Music() {
       </div>
 
       <div className="band-box">
-        <h3>Dissonant Protean</h3>
-        <p>This is my solo electronic project.<br />Progressive electropunk.</p>
+        <h3>Protean</h3>
+        <p>My solo electronic project.<br />Used to be sample-based post-vaporwave and triphop,<br /> more recently is progressive electropunk</p>
         <ul style={{ listStyle: 'none' }}>
           <li><a href="https://dissonant-protean.bandcamp.com" target="_blank" rel="noopener noreferrer">Bandcamp</a></li>
         </ul>
