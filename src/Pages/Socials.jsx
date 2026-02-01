@@ -12,6 +12,9 @@ function Socials() {
             <a href="https://linkedin.com/in/maxpleaner" target="_blank" rel="noopener noreferrer" className="contact-link">LinkedIn</a>
           </li>
           <li style={{ marginBottom: '15px' }}>
+            <a href="https://github.com/dissonantP" target="_blank" rel="noopener noreferrer" className="contact-link">Github</a>
+          </li>
+          <li style={{ marginBottom: '15px' }}>
             <a href="https://www.instagram.com/macskamz/" target="_blank" rel="noopener noreferrer" className="contact-link">Instagram</a>
           </li>
           <li style={{ marginBottom: '15px' }}>
