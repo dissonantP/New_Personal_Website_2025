@@ -16,14 +16,14 @@ const projectSections = [
       },
       {
         name: 'Shader-Web',
-        url: 'https://maxpleaner.github.io/ShaderWeb/',
+        url: 'https://dissonantp.github.io/ShaderWeb/',
         thumbnail: './projects/shader-web.png',
         thumbnailType: 'image',
         description: 'A web sandbox for writing camera effects in GLSL. The associated mobile app is WIP.',
       },
       {
         name: 'Sticker Layout',
-        url: 'https://maxpleaner.github.io/StickerLayout',
+        url: 'https://dissonantp.github.io/StickerLayout',
         thumbnail: './projects/sticker-layout.png',
         thumbnailType: 'image',
         description: 'A utility for laying out images in a grid (useful for printing stickers).',
@@ -50,7 +50,7 @@ const projectSections = [
       // },
       {
         name: 'P5 Playground',
-        url: 'https://maxpleaner.github.io/p5_playground',
+        url: 'https://dissonantp.github.io/p5_playground',
         thumbnail: './projects/p5-playground.png',
         thumbnailType: 'image',
         description: 'Generative art experiments using the p5.js library',
@@ -64,7 +64,7 @@ const projectSections = [
       // },
       {
         name: 'Pinball',
-        url: 'https://maxpleaner.github.io/pinball/',
+        url: 'https://dissonantp.github.io/pinball/',
         thumbnail: './projects/pinball.png',
         thumbnailType: 'image',
         description: 'Browser-based pinball game created in P5.js',
