@@ -37,8 +37,9 @@ a {
 
 .intro {
   display: grid;
-  justify-items: center;
-  text-align: center;
+  justify-items: stretch;
+  padding-top: 24px;
+  text-align: left;
   opacity: 1;
   transform: translateY(0);
   transition:
@@ -70,7 +71,13 @@ a {
 }
 
 .home-title {
-  font-size: clamp(28px, 5vw, 48px);
+  width: 100%;
+  max-width: none;
+  padding: 18px 20px;
+  border-bottom: 2px solid #c63f2d;
+  background: #111111;
+  color: #f4f1ea;
+  font-size: clamp(32px, 7vw, 68px);
   letter-spacing: 0;
 }
 
@@ -86,9 +93,9 @@ a {
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 18px;
-  margin-top: 36px;
+  gap: 0;
+  margin-top: 0;
+  width: 100%;
 }
 
 .section-nav-secondary {
@@ -96,15 +103,35 @@ a {
 }
 
 .link {
-  display: inline-flex;
-  justify-content: center;
-  color: #111111;
-  font-size: clamp(28px, 6vw, 56px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  padding: 18px 20px;
+  border-bottom: 1px solid #f4f1ea;
+  background: #111111;
+  color: #f4f1ea;
+  font-size: clamp(32px, 7vw, 68px);
   font-weight: 700;
-  line-height: 1;
+  line-height: 0.95;
   text-decoration: none;
+  transition:
+    color 160ms ease,
+    padding-left 160ms ease;
+}
+
+.link::after {
+  content: ">";
+  flex: 0 0 auto;
+  color: #c63f2d;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 0.72em;
+  line-height: 1;
 }
 
 .link:hover {
-  color: #c63f2d;
+  color: #ffffff;
+  padding-left: 10px;
 }
