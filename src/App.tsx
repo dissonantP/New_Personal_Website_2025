@@ -2,30 +2,24 @@ import { useEffect, useRef, useState } from 'react';
 import { Box } from './components/Box';
 import { BigHeader } from './components/BigHeader';
 import { Link } from './components/Link';
-import { SmallHeader } from './components/SmallHeader';
+import { ArtSection } from './sections/ArtSection';
+import { MusicSection } from './sections/MusicSection';
+import { SoftwareSection } from './sections/SoftwareSection';
 
 type SectionId = 'home' | 'software' | 'creative' | 'music';
 
 const sections = {
   software: {
-    label: 'Software Development',
-    title: 'Software Development',
-    body: 'Professional software work, engineering systems, and applied product development.',
+    label: 'software',
   },
   creative: {
-    label: 'Creative Technology',
-    title: 'Creative Technology',
-    body: 'Experimental interfaces, interactive media, and technology-led creative work.',
+    label: 'art',
   },
   music: {
-    label: 'Music',
-    title: 'Music',
-    body: 'Original music, performance projects, and sound-focused work.',
+    label: 'music',
   },
 } satisfies Record<Exclude<SectionId, 'home'>, {
   label: string;
-  title: string;
-  body: string;
 }>;
 
 const sectionLinks = Object.entries(sections) as Array<
@@ -57,12 +51,31 @@ export function App() {
     }, 220);
   }
 
+  function renderSection() {
+    switch (section) {
+      case 'software':
+        return <SoftwareSection onBack={() => navigate('home')} />;
+      case 'creative':
+        return <ArtSection onBack={() => navigate('home')} />;
+      case 'music':
+        return <MusicSection onBack={() => navigate('home')} />;
+      default:
+        return null;
+    }
+  }
+
   return (
     <main className="app-shell">
-      <Box className={`intro ${isFading ? 'intro-fading' : ''}`}>
+      <Box
+        className={`intro ${section === 'home' ? 'home-intro' : 'page-intro'} ${
+          isFading ? 'intro-fading' : ''
+        }`}
+      >
         {section === 'home' ? (
           <>
-            <BigHeader className="home-title">MAX PLEANER</BigHeader>
+            <BigHeader className="home-title">
+              <span className="home-title-label">Max Pleaner</span>
+            </BigHeader>
             <nav className="section-nav" aria-label="Website sections">
               {sectionLinks.map(([id, item]) => (
                 <Link
@@ -79,36 +92,7 @@ export function App() {
             </nav>
           </>
         ) : (
-          <>
-            <SmallHeader>MAX PLEANER</SmallHeader>
-            <BigHeader>{sections[section].title}</BigHeader>
-            <p>{sections[section].body}</p>
-            <nav className="section-nav section-nav-secondary" aria-label="Website sections">
-              <Link
-                href="#"
-                onClick={(event) => {
-                  event.preventDefault();
-                  navigate('home');
-                }}
-              >
-                Home
-              </Link>
-              {sectionLinks
-                .filter(([id]) => id !== section)
-                .map(([id, item]) => (
-                  <Link
-                    href={`#${id}`}
-                    key={id}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      navigate(id);
-                    }}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-            </nav>
-          </>
+          renderSection()
         )}
       </Box>
     </main>
