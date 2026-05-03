@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Box } from './components/Box';
-import { BigHeader } from './components/BigHeader';
-import { Link } from './components/Link';
+import { P5Home } from './components/P5Home';
 import { ArtSection } from './sections/ArtSection';
 import { MusicSection } from './sections/MusicSection';
 import { SoftwareSection } from './sections/SoftwareSection';
@@ -25,6 +24,8 @@ const sections = {
 const sectionLinks = Object.entries(sections) as Array<
   [Exclude<SectionId, 'home'>, (typeof sections)[Exclude<SectionId, 'home'>]]
 >;
+
+const homeItems = sectionLinks.map(([id, item]) => ({ id, label: item.label }));
 
 export function App() {
   const [section, setSection] = useState<SectionId>('home');
@@ -72,25 +73,7 @@ export function App() {
         }`}
       >
         {section === 'home' ? (
-          <>
-            <BigHeader className="home-title">
-              <span className="home-title-label">Max Pleaner</span>
-            </BigHeader>
-            <nav className="section-nav" aria-label="Website sections">
-              {sectionLinks.map(([id, item]) => (
-                <Link
-                  href={`#${id}`}
-                  key={id}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    navigate(id);
-                  }}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </>
+          <P5Home items={homeItems} onNavigate={navigate} />
         ) : (
           renderSection()
         )}

@@ -44,6 +44,67 @@ a {
   display: block;
 }
 
+.p5-home {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.p5-home canvas {
+  display: block;
+}
+
+.sdf-dev-panel {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 5;
+  display: grid;
+  gap: 8px;
+  width: min(280px, calc(100vw - 24px));
+  padding: 12px;
+  background: rgb(17 17 17 / 86%);
+  color: #f4f1ea;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.sdf-dev-panel label {
+  display: grid;
+  grid-template-columns: 82px 1fr 38px;
+  align-items: center;
+  gap: 8px;
+}
+
+.sdf-dev-panel input[type="range"] {
+  width: 100%;
+  accent-color: #20c05c;
+}
+
+.sdf-dev-panel span {
+  text-align: right;
+}
+
+.sdf-dev-toggle {
+  grid-template-columns: 82px auto 1fr !important;
+}
+
+.sdf-dev-toggle input {
+  justify-self: start;
+  accent-color: #20c05c;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .box {
   width: 100%;
 }
@@ -72,7 +133,7 @@ a {
   justify-items: center;
   row-gap: clamp(28px, 5vh, 52px);
   min-height: 100vh;
-  padding: 48px 24px;
+  padding: 0;
 }
 
 .page-intro {
@@ -112,7 +173,7 @@ a {
   padding: 22px clamp(20px, 5vw, 56px);
   background: #111111;
   color: #f4f1ea;
-  font-size: clamp(34px, 6vw, 64px) !important;
+  font-size: clamp(26px, 5vw, 44px) !important;
   font-weight: 900;
   letter-spacing: 0;
 }
