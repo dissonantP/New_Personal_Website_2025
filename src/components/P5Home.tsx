@@ -42,6 +42,8 @@ type SdfConfig = {
   lineModulo: number;
   lineThickness: number;
   lineInnerBrightness: number;
+  linePeakPosition: number;
+  linePeakWidth: number;
   lineOuterBrightness: number;
   lineOverallBrightness: number;
   falloff: FalloffStop[];
@@ -64,13 +66,15 @@ const defaultSdfConfig: SdfConfig = {
   includeCarets: false,
   showLines: true,
   thresholdLines: true,
-  invert: true,
+  invert: false,
   animateLines: true,
   lineSpeed: 2,
   lineModulo: 48,
-  lineThickness: 0.43,
-  lineInnerBrightness: 1,
-  lineOuterBrightness: 1,
+  lineThickness: 0.11,
+  lineInnerBrightness: 0,
+  linePeakPosition: 0.5,
+  linePeakWidth: 0,
+  lineOuterBrightness: 0,
   lineOverallBrightness: 1,
   falloff: [
     { at: 0, value: 1 },
@@ -157,6 +161,21 @@ function sampleFalloff(stops: FalloffStop[], value: number) {
   }
 
   return stops[stops.length - 1].value;
+}
+
+function sampleLineBrightness(config: SdfConfig, value: number) {
+  const peakPosition = clamp(0.001, config.linePeakPosition, 0.999);
+  const peakWidth = clamp(0.0001, config.linePeakWidth, 0.98);
+  const baseline =
+    config.lineInnerBrightness +
+    (config.lineOuterBrightness - config.lineInnerBrightness) * smoothstep(0, 1, value);
+  const peakBaseline =
+    config.lineInnerBrightness +
+    (config.lineOuterBrightness - config.lineInnerBrightness) * smoothstep(0, 1, peakPosition);
+  const distanceFromPeak = (value - peakPosition) / peakWidth;
+  const peakInfluence = Math.exp(-8 * distanceFromPeak * distanceFromPeak);
+
+  return baseline + (config.lineOverallBrightness - peakBaseline) * peakInfluence;
 }
 
 function distanceTransform1d(input: Float32Array, output: Float32Array, length: number) {
@@ -267,15 +286,14 @@ function renderDistanceField(field: SdfField, p: p5, config: SdfConfig, linePhas
       const fieldIndex = y * field.width + x;
       const pixelIndex = fieldIndex * 4;
       const distance = Math.sqrt(field.distances[fieldIndex]);
-      const t = clamp(0, distance / scaledSpread, 1);
+      const rawT = distance / scaledSpread;
+      const t = clamp(0, rawT, 1);
       const brightness = sampleFalloff(config.falloff, t);
       const phase = (((t * config.lineModulo - linePhaseOffset) % 1) + 1) % 1;
       const lineDistance = Math.min(phase, 1 - phase);
-      const lineMask = lineDistance <= config.lineThickness ? 1 : 0;
-      const lineBrightness =
-        config.lineOverallBrightness *
-        (config.lineInnerBrightness +
-          (config.lineOuterBrightness - config.lineInnerBrightness) * t);
+      const thresholdBand = rawT < 1 && lineDistance <= config.lineThickness ? 1 : 0;
+      const lineMask = config.invert ? 1 - thresholdBand : thresholdBand;
+      const lineBrightness = sampleLineBrightness(config, t);
       const thresholdLineColor = clamp(0, lineBrightness, 1);
       const thresholdLineBackground = config.invert ? 1 : 0;
       const line = config.thresholdLines
@@ -648,7 +666,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           <span>{config.lineThickness.toFixed(2)}</span>
         </label>
         <label>
-          inner
+          inner min
           <input
             max="2"
             min="0"
@@ -662,21 +680,35 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           <span>{config.lineInnerBrightness.toFixed(2)}</span>
         </label>
         <label>
-          outer
+          peak at
           <input
-            max="2"
-            min="0"
+            max="0.98"
+            min="0.02"
             onChange={(event) =>
-              updateConfig({ lineOuterBrightness: Number(event.target.value) })
+              updateConfig({ linePeakPosition: Number(event.target.value) })
             }
             step="0.01"
             type="range"
-            value={config.lineOuterBrightness}
+            value={config.linePeakPosition}
           />
-          <span>{config.lineOuterBrightness.toFixed(2)}</span>
+          <span>{config.linePeakPosition.toFixed(2)}</span>
         </label>
         <label>
-          overall
+          peak width
+          <input
+            max="0.98"
+            min="0"
+            onChange={(event) =>
+              updateConfig({ linePeakWidth: Number(event.target.value) })
+            }
+            step="0.01"
+            type="range"
+            value={config.linePeakWidth}
+          />
+          <span>{config.linePeakWidth.toFixed(2)}</span>
+        </label>
+        <label>
+          peak
           <input
             max="2"
             min="0"
@@ -688,6 +720,20 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             value={config.lineOverallBrightness}
           />
           <span>{config.lineOverallBrightness.toFixed(2)}</span>
+        </label>
+        <label>
+          outer min
+          <input
+            max="2"
+            min="0"
+            onChange={(event) =>
+              updateConfig({ lineOuterBrightness: Number(event.target.value) })
+            }
+            step="0.01"
+            type="range"
+            value={config.lineOuterBrightness}
+          />
+          <span>{config.lineOuterBrightness.toFixed(2)}</span>
         </label>
       </div>
       <nav className="p5-home-nav visually-hidden" aria-label="Website sections">
