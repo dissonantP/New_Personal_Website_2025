@@ -21,6 +21,22 @@ export type TextSceneBlock<TTarget extends string = string> = {
   style: TextSceneBlockStyle;
 };
 
+export type TextSceneBlockSpec<TTarget extends string = string> = {
+  id: string;
+  lines: string[];
+  interactive: boolean;
+  targets?: [TTarget, TTarget];
+  style: TextSceneBlockStyle;
+  fontSize: (width: number) => number;
+  lineGap: (fontSize: number) => number;
+  layout: (args: {
+    width: number;
+    height: number;
+    metrics: Pick<TextSceneBlock<TTarget>, 'width' | 'height' | 'lineGap'>;
+    previous: Partial<Record<string, TextSceneBlock<TTarget>>>;
+  }) => { x: number; y: number };
+};
+
 export type TextSceneContent<TTarget extends string = string> = {
   background: string;
   fontFamily: string;

@@ -7,25 +7,11 @@ function clamp(min: number, value: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-export { clamp };
-
-export function getHomeFontStack() {
+export function getTextSceneFontStack() {
   return FONT_STACK;
 }
 
-export function getHomeOffset(width: number) {
-  if (width <= 640) {
-    return clamp(42, width * 0.14, 72);
-  }
-
-  return clamp(72, width * 0.095, 140);
-}
-
-export function measureBlock(
-  p: p5 | p5.Graphics,
-  lines: string[],
-  fontSize: number,
-) {
+export function measureTextSceneBlock(p: p5 | p5.Graphics, lines: string[], fontSize: number) {
   p.textFont(FONT_STACK);
   p.textSize(fontSize);
 
@@ -37,3 +23,5 @@ export function measureBlock(
     height: lineHeight * lines.length,
   };
 }
+
+export { clamp };
