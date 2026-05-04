@@ -1,9 +1,9 @@
 import p5 from 'p5';
 
-import type { TextBlockLayout, TextBlockSpec } from './types';
+import type { HomeItem, HomeItemId, HomeTextBlock } from './types';
 
 const DESCRIPTION_OFFSET_X = 20;
-const MONO_FONT_STACK =
+const FONT_STACK =
   'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
 
 function clamp(min: number, value: number, max: number) {
@@ -18,7 +18,7 @@ function getHomeOffset(width: number) {
   return clamp(72, width * 0.095, 140);
 }
 
-function getBlockFontSize(blockId: TextBlockLayout['id'], width: number) {
+function getBlockFontSize(blockId: 'title' | 'description' | 'links', width: number) {
   if (blockId === 'title') {
     return clamp(26, width * 0.05, 44);
   }
@@ -26,7 +26,7 @@ function getBlockFontSize(blockId: TextBlockLayout['id'], width: number) {
   return clamp(18, width * 0.035, 24);
 }
 
-function getBlockLineGap(blockId: TextBlockLayout['id'], fontSize: number) {
+function getBlockLineGap(blockId: 'title' | 'description' | 'links', fontSize: number) {
   if (blockId === 'title') {
     return fontSize * 0.15;
   }
@@ -40,74 +40,108 @@ function getBlockLineGap(blockId: TextBlockLayout['id'], fontSize: number) {
 
 function measureBlock(
   p: p5 | p5.Graphics,
-  block: TextBlockSpec,
+  block: Omit<HomeTextBlock, 'x' | 'y' | 'width' | 'height' | 'lineGap' | 'style'> & {
+    style: HomeTextBlock['style'];
+  },
   fontSize: number,
-): Pick<TextBlockLayout, 'width' | 'height' | 'lineGap'> {
-  p.textFont(MONO_FONT_STACK);
+) {
+  p.textFont(FONT_STACK);
   p.textSize(fontSize);
 
-  const lineGap = getBlockLineGap(block.id, fontSize);
+  const lineGap = getBlockLineGap(block.id as 'title' | 'description' | 'links', fontSize);
   const lineHeight = fontSize * 0.95;
   const width = Math.max(...block.lines.map((line) => p.textWidth(line)));
   const height = lineHeight * block.lines.length + lineGap * Math.max(0, block.lines.length - 1);
 
-  return {
-    width,
-    height,
-    lineGap,
-  };
+  return { width, height, lineGap };
 }
 
-export function getHomeTextBlockLayouts(
+export function getHomeBlocks(
   p: p5 | p5.Graphics,
-  blocks: TextBlockSpec[],
+  items: HomeItem[],
   width: number,
   height: number,
-): TextBlockLayout[] {
-  const titleBlock = blocks.find((block) => block.id === 'title');
-  const descriptionBlock = blocks.find((block) => block.id === 'description');
-  const linksBlock = blocks.find((block) => block.id === 'links');
-
-  if (!titleBlock || !descriptionBlock || !linksBlock) {
-    return [];
-  }
+): HomeTextBlock[] {
+  const titleLines = ['Max Pleaner'];
+  const descriptionLines = ['', 'does', '  software', '  art', '  media', '  and music'];
+  const linksLines = items.map((item) => item.label);
 
   const titleFontSize = getBlockFontSize('title', width);
   const descriptionFontSize = getBlockFontSize('description', width);
   const linksFontSize = getBlockFontSize('links', width);
 
-  const titleMetrics = measureBlock(p, titleBlock, titleFontSize);
-  const descriptionMetrics = measureBlock(p, descriptionBlock, descriptionFontSize);
-  const linksMetrics = measureBlock(p, linksBlock, linksFontSize);
+  const titleMetrics = measureBlock(
+    p,
+    {
+      id: 'title',
+      lines: titleLines,
+      interactive: false,
+      targets: undefined,
+      style: { fontSize: titleFontSize, align: 'center', fill: '#f4f1ea', fontWeight: 900 },
+    },
+    titleFontSize,
+  );
+  const descriptionMetrics = measureBlock(
+    p,
+    {
+      id: 'description',
+      lines: descriptionLines,
+      interactive: false,
+      targets: undefined,
+      style: { fontSize: descriptionFontSize, align: 'center', fill: '#f4f1ea', fontWeight: 700 },
+    },
+    descriptionFontSize,
+  );
+  const linksMetrics = measureBlock(
+    p,
+    {
+      id: 'links',
+      lines: linksLines,
+      interactive: true,
+      targets: [items[0].id, items[1].id] as [HomeItemId, HomeItemId],
+      style: { fontSize: linksFontSize, align: 'left', fill: '#20c05c', hoverFill: '#39e476', fontWeight: 700 },
+    },
+    linksFontSize,
+  );
 
   const titleTop = clamp(56, height * 0.18, height * 0.32);
   const descriptionTop = titleTop + titleMetrics.height + clamp(12, height * 0.02, 20);
   const linksTop = descriptionTop + descriptionMetrics.height + clamp(44, height * 0.09, 88);
-  const titleX = (width - titleMetrics.width) / 2;
-  const descriptionX = (width - descriptionMetrics.width) / 2 + DESCRIPTION_OFFSET_X;
-  const linksX = (width - linksMetrics.width) / 2 - getHomeOffset(width);
 
   return [
     {
-      ...titleBlock,
-      ...titleMetrics,
-      x: titleX,
+      id: 'title',
+      lines: titleLines,
+      interactive: false,
+      style: { fontSize: titleFontSize, align: 'center', fill: '#f4f1ea', fontWeight: 900 },
+      x: (width - titleMetrics.width) / 2,
       y: titleTop,
-      fontSize: titleFontSize,
+      width: titleMetrics.width,
+      height: titleMetrics.height,
+      lineGap: titleMetrics.lineGap,
     },
     {
-      ...descriptionBlock,
-      ...descriptionMetrics,
-      x: descriptionX,
+      id: 'description',
+      lines: descriptionLines,
+      interactive: false,
+      style: { fontSize: descriptionFontSize, align: 'center', fill: '#f4f1ea', fontWeight: 700 },
+      x: (width - descriptionMetrics.width) / 2 + DESCRIPTION_OFFSET_X,
       y: descriptionTop,
-      fontSize: descriptionFontSize,
+      width: descriptionMetrics.width,
+      height: descriptionMetrics.height,
+      lineGap: descriptionMetrics.lineGap,
     },
     {
-      ...linksBlock,
-      ...linksMetrics,
-      x: linksX,
+      id: 'links',
+      lines: linksLines,
+      interactive: true,
+      targets: [items[0].id, items[1].id] as [HomeItemId, HomeItemId],
+      style: { fontSize: linksFontSize, align: 'left', fill: '#20c05c', hoverFill: '#39e476', fontWeight: 700 },
+      x: (width - linksMetrics.width) / 2 - getHomeOffset(width),
       y: linksTop,
-      fontSize: linksFontSize,
+      width: linksMetrics.width,
+      height: linksMetrics.height,
+      lineGap: linksMetrics.lineGap,
     },
   ];
 }

@@ -1,8 +1,7 @@
 import p5 from 'p5';
 
-import { getHomeTextBlocks } from './content';
-import { getHomeTextBlockLayouts } from './layout';
-import type { HomeItem, HomeItemId, TextBlockLayout } from './types';
+import type { HomeTextContent } from './types';
+import type { TextSceneEffects } from '../P5TextScene/types';
 
 type SdfPassConfig = {
   enabled: boolean;
@@ -44,8 +43,11 @@ type SdfPassRender = {
   pulsePositions: Float32Array;
 };
 
-const fontStack =
-  'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
+export type HomeEffectState = {
+  pipeline: SdfPassRender[];
+  baseImage: p5.Image | null;
+  animate: boolean;
+};
 
 const sdfPresets = {
   noisyLineField: {
@@ -403,182 +405,48 @@ function hasPulseAnimation(config: SdfConfig) {
   });
 }
 
-export function createP5HomeSketch(options: {
-  getHostElement: () => HTMLDivElement | null;
-  items: HomeItem[];
-  onNavigate: (id: HomeItemId) => void;
-}) {
-  const { getHostElement, items, onNavigate } = options;
-  const config = defaultSdfConfig;
-
-  return (p: p5) => {
-    let hoveredBlockId: TextBlockLayout['id'] | null = null;
-    let baseSdfImage: p5.Image | null = null;
-    let sdfImage: p5.Image | null = null;
-    let sdfPipeline: SdfPassRender[] = [];
-    let resizeTimer: number | null = null;
-    let layout: TextBlockLayout[] = [];
-
-    function getInteractiveBlock() {
-      return layout.find((block) => {
-        return (
-          block.interactive &&
-          p.mouseX >= block.x &&
-          p.mouseX <= block.x + block.width &&
-          p.mouseY >= block.y &&
-          p.mouseY <= block.y + block.height
-        );
-      });
-    }
-
-    function updateHover() {
-      const block = getInteractiveBlock();
-      const nextHoveredBlockId = block ? block.id : null;
-
-      if (nextHoveredBlockId !== hoveredBlockId) {
-        hoveredBlockId = nextHoveredBlockId;
-        renderHome();
-      }
-
-      p.cursor(hoveredBlockId ? p.HAND : p.ARROW);
-    }
-
-    function drawTextBlocks(surface: p5 | p5.Graphics, blocks: TextBlockLayout[], useMask: boolean) {
-      surface.textFont(fontStack);
-      surface.noStroke();
-
-      blocks.forEach((block) => {
-        const lineHeight = block.fontSize * 0.95;
-        const blockStep = lineHeight + block.lineGap;
-        const isHovered = block.id === hoveredBlockId;
-        const isLink = block.interactive;
-
-        surface.fill(useMask ? '#ffffff' : isHovered ? '#39e476' : isLink ? '#20c05c' : '#f4f1ea');
-        surface.textStyle('bold');
-        surface.textAlign(block.align, 'center');
-        surface.textSize(block.fontSize);
-        block.lines.forEach((line, index) => {
-          surface.text(line, block.x, block.y + blockStep * index + lineHeight / 2);
-        });
-      });
-    }
-
-    function getBlocks() {
-      return getHomeTextBlockLayouts(p, getHomeTextBlocks(items), p.width, p.height);
-    }
-
-    function renderHome() {
-      layout = getBlocks();
-
-      p.background('#111111');
-
-      if (sdfImage) {
-        p.image(sdfImage, 0, 0, p.width, p.height);
-      }
-
-      drawTextBlocks(p, layout, false);
-    }
-
-    function rebuildDistanceField() {
+export function createHomeEffects(
+  config: SdfConfig = defaultSdfConfig,
+): TextSceneEffects<HomeTextContent, HomeEffectState> {
+  return {
+    build({ p, mask }) {
       const scale = config.resolutionScale;
       const useFullResolution = scale >= 0.99;
-      const width = useFullResolution ? p.width : Math.max(1, Math.round(p.width * scale));
-      const height = useFullResolution ? p.height : Math.max(1, Math.round(p.height * scale));
-      const mask = p.createGraphics(width, height);
-      const blocks = getBlocks();
-
-      layout = blocks;
-      mask.pixelDensity(1);
-      mask.background('#000000');
+      const sourceScale = useFullResolution ? 1 : scale;
+      let source: p5.Graphics | p5.Image = mask;
 
       if (!useFullResolution) {
-        mask.push();
-        mask.scale(scale);
+        source = p.createGraphics(Math.max(1, Math.round(mask.width * scale)), Math.max(1, Math.round(mask.height * scale)));
+        source.pixelDensity(1);
+        source.background('#000000');
+        source.image(mask, 0, 0, source.width, source.height);
       }
 
-      drawTextBlocks(mask, blocks, true);
+      const pipeline = buildSdfPassPipeline(source, p, config, sourceScale);
+      const baseImage = renderSdfPasses(pipeline, p);
 
       if (!useFullResolution) {
-        mask.pop();
+        source.remove();
       }
 
-      sdfPipeline = buildSdfPassPipeline(mask, p, config, useFullResolution ? 1 : scale);
-      baseSdfImage = renderSdfPasses(sdfPipeline, p);
-      sdfImage = baseSdfImage;
-      mask.remove();
-      renderHome();
+      const state: HomeEffectState = {
+        pipeline,
+        baseImage,
+        animate: hasPulseAnimation(config),
+      };
 
-      if (hasPulseAnimation(config)) {
-        p.loop();
-      } else {
-        p.noLoop();
-      }
-    }
-
-    function scheduleDistanceFieldRebuild() {
-      if (resizeTimer) {
-        window.clearTimeout(resizeTimer);
-      }
-
-      resizeTimer = window.setTimeout(rebuildDistanceField, 160);
-    }
-
-    p.setup = () => {
-      const host = getHostElement();
-
-      if (!host) {
-        return;
+      return {
+        baseImage,
+        state,
+        animate: state.animate,
+      };
+    },
+    renderFrame(state, p, elapsedSeconds) {
+      if (!state.baseImage) {
+        return null;
       }
 
-      const canvas = p.createCanvas(host.clientWidth, host.clientHeight);
-      canvas.parent(host);
-      canvas.elt.addEventListener('mouseleave', () => {
-        hoveredBlockId = null;
-        p.cursor(p.ARROW);
-        renderHome();
-      });
-      p.pixelDensity(1);
-      rebuildDistanceField();
-    };
-
-    p.draw = () => {
-      if (!sdfPipeline.length || !baseSdfImage || !hasPulseAnimation(config)) {
-        return;
-      }
-
-      sdfImage = renderSdfPulseFrame(sdfPipeline, baseSdfImage, p, p.millis() / 1000);
-      renderHome();
-    };
-
-    p.windowResized = () => {
-      const host = getHostElement();
-
-      if (!host) {
-        return;
-      }
-
-      p.resizeCanvas(host.clientWidth, host.clientHeight);
-      renderHome();
-      scheduleDistanceFieldRebuild();
-    };
-
-    p.mouseMoved = () => {
-      updateHover();
-    };
-
-    p.mouseClicked = () => {
-      const block = getInteractiveBlock();
-
-      if (block && block.id === 'links' && block.targets) {
-        const lineHeight = block.fontSize * 0.95;
-        const lineStep = lineHeight + block.lineGap;
-        const lineIndex = clamp(0, Math.floor((p.mouseY - block.y) / lineStep), block.lines.length - 1);
-        const target = block.targets[lineIndex];
-
-        if (target) {
-          onNavigate(target);
-        }
-      }
-    };
+      return renderSdfPulseFrame(state.pipeline, state.baseImage, p, elapsedSeconds);
+    },
   };
 }

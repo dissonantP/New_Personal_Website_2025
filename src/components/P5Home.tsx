@@ -1,8 +1,11 @@
-import p5 from 'p5';
-import { useEffect, useRef } from 'react';
+import type p5 from 'p5';
+import { useCallback, useMemo } from 'react';
 
-import { createP5HomeSketch } from './P5Home/sketch';
+import { P5TextScene } from './P5TextScene';
+import { createTextSceneSketch } from './P5TextScene/sketch';
 import type { HomeItem, HomeItemId } from './P5Home/types';
+import { getHomeContent } from './P5Home/content';
+import { createHomeEffects } from './P5Home/effects';
 
 type P5HomeProps = {
   items: HomeItem[];
@@ -10,40 +13,16 @@ type P5HomeProps = {
 };
 
 export function P5Home({ items, onNavigate }: P5HomeProps) {
-  const hostRef = useRef<HTMLDivElement | null>(null);
-  const sketchRef = useRef<p5 | null>(null);
-
-  useEffect(() => {
-    const sketch = createP5HomeSketch({
-      getHostElement: () => hostRef.current,
-      items,
-      onNavigate,
-    });
-
-    sketchRef.current = new p5(sketch);
-
-    return () => {
-      sketchRef.current?.remove();
-      sketchRef.current = null;
-    };
-  }, [items, onNavigate]);
-
-  return (
-    <div className="p5-home" ref={hostRef}>
-      <nav className="p5-home-nav visually-hidden" aria-label="Website sections">
-        {items.map((item) => (
-          <a
-            href={`#${item.id}`}
-            key={item.id}
-            onClick={(event) => {
-              event.preventDefault();
-              onNavigate(item.id);
-            }}
-          >
-            {item.label}
-          </a>
-        ))}
-      </nav>
-    </div>
+  const getContent = useCallback(
+    (p: p5, width: number, height: number) => getHomeContent(p, items, width, height),
+    [items],
   );
+  const effects = useMemo(() => createHomeEffects(), []);
+  const navigate = useCallback((id: HomeItemId) => onNavigate(id), [onNavigate]);
+  const createSketch = useMemo(
+    () => createTextSceneSketch({ effects, onNavigate: navigate }),
+    [effects, navigate],
+  );
+
+  return <P5TextScene getContent={getContent} createSketch={createSketch} />;
 }

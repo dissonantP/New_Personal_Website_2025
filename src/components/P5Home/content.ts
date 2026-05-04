@@ -1,35 +1,21 @@
-import type { HomeItem, TextBlockSpec } from './types';
+import type p5 from 'p5';
 
-export const HOME_TITLE = 'Max Pleaner';
-export const HOME_DESCRIPTION_LINES = ['', 'does', '  software', '  art', '  media', '  and music'];
+import { getHomeBlocks } from './layout';
+import type { HomeItem, HomeTextContent } from './types';
 
-export function getHomeItems(): HomeItem[] {
-  return [
-    { id: 'portfolio', label: 'portfolio' },
-    { id: 'services', label: 'services' },
-  ];
-}
+const HOME_BACKGROUND = '#111111';
+const HOME_FONT_STACK =
+  'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
 
-export function getHomeTextBlocks(items: HomeItem[]): TextBlockSpec[] {
-  return [
-    {
-      id: 'title',
-      lines: [HOME_TITLE],
-      align: 'center',
-      interactive: false,
-    },
-    {
-      id: 'description',
-      lines: HOME_DESCRIPTION_LINES,
-      align: 'center',
-      interactive: false,
-    },
-    {
-      id: 'links',
-      lines: items.map((item) => item.label),
-      align: 'left',
-      interactive: true,
-      targets: [items[0].id, items[1].id],
-    },
-  ];
+export function getHomeContent(
+  p: p5,
+  items: HomeItem[],
+  width: number,
+  height: number,
+): HomeTextContent {
+  return {
+    background: HOME_BACKGROUND,
+    fontFamily: HOME_FONT_STACK,
+    blocks: getHomeBlocks(p, items, width, height),
+  };
 }
