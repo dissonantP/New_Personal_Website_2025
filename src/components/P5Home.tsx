@@ -24,16 +24,21 @@ type RowLayout = {
   weight: number;
 };
 
-type SdfConfig = {
-  resolutionScale: number;
+type SdfPassConfig = {
+  enabled: boolean;
   spread: number;
   seedThreshold: number;
-  includeCarets: boolean;
   showLines: boolean;
   thresholdLines: boolean;
   invert: boolean;
   lineModulo: number;
   lineThickness: number;
+};
+
+type SdfConfig = {
+  resolutionScale: number;
+  includeCarets: boolean;
+  passes: [SdfPassConfig, SdfPassConfig];
 };
 
 type SdfField = {
@@ -48,14 +53,29 @@ const fontStack =
   'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
 const defaultSdfConfig: SdfConfig = {
   resolutionScale: 1,
-  spread: 820,
-  seedThreshold: 150,
   includeCarets: false,
-  showLines: true,
-  thresholdLines: true,
-  invert: false,
-  lineModulo: 48,
-  lineThickness: 0.11,
+  passes: [
+    {
+      enabled: true,
+      spread: 820,
+      seedThreshold: 150,
+      showLines: true,
+      thresholdLines: true,
+      invert: false,
+      lineModulo: 48,
+      lineThickness: 0.11,
+    },
+    {
+      enabled: false,
+      spread: 220,
+      seedThreshold: 24,
+      showLines: false,
+      thresholdLines: false,
+      invert: false,
+      lineModulo: 24,
+      lineThickness: 0.12,
+    },
+  ],
 };
 
 function clamp(min: number, value: number, max: number) {
@@ -165,7 +185,11 @@ function distanceTransform1d(input: Float32Array, output: Float32Array, length: 
   }
 }
 
-function createDistanceField(source: p5.Graphics, config: SdfConfig, sourceScale: number): SdfField {
+function createDistanceField(
+  source: p5.Graphics | p5.Image,
+  seedThreshold: number,
+  sourceScale: number,
+): SdfField {
   const width = source.width;
   const height = source.height;
   const infinity = 1e12;
@@ -187,7 +211,7 @@ function createDistanceField(source: p5.Graphics, config: SdfConfig, sourceScale
         source.pixels[pixelIndex + 1] * 0.587 +
         source.pixels[pixelIndex + 2] * 0.114;
 
-      seeds[y * width + x] = brightness >= config.seedThreshold ? 0 : infinity;
+      seeds[y * width + x] = brightness >= seedThreshold ? 0 : infinity;
     }
   }
 
@@ -223,7 +247,13 @@ function createDistanceField(source: p5.Graphics, config: SdfConfig, sourceScale
   };
 }
 
-function renderDistanceField(field: SdfField, p: p5, config: SdfConfig) {
+function runSdfLinePass(
+  source: p5.Graphics | p5.Image,
+  p: p5,
+  config: SdfPassConfig,
+  sourceScale: number,
+) {
+  const field = createDistanceField(source, config.seedThreshold, sourceScale);
   const image = p.createImage(field.width, field.height);
   const scaledSpread = config.spread * field.sourceScale;
 
@@ -256,6 +286,25 @@ function renderDistanceField(field: SdfField, p: p5, config: SdfConfig) {
   }
 
   image.updatePixels();
+
+  return image;
+}
+
+function renderSdfPasses(
+  source: p5.Graphics,
+  p: p5,
+  config: SdfConfig,
+  sourceScale: number,
+) {
+  let image: p5.Image | null = null;
+
+  config.passes.forEach((pass) => {
+    if (!pass.enabled) {
+      return;
+    }
+
+    image = runSdfLinePass(image ?? source, p, pass, sourceScale);
+  });
 
   return image;
 }
@@ -364,8 +413,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           mask.pop();
         }
 
-        const sdfField = createDistanceField(mask, config, useFullResolution ? 1 : scale);
-        sdfImage = renderDistanceField(sdfField, p, config);
+        sdfImage = renderSdfPasses(mask, p, config, useFullResolution ? 1 : scale);
         mask.remove();
         renderHome();
         p.noLoop();
@@ -424,21 +472,110 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
     setConfig((current) => ({ ...current, ...update }));
   }
 
-  return (
-    <div className="p5-home" ref={hostRef}>
-      <div className="sdf-dev-panel">
+  function updatePass(index: 0 | 1, update: Partial<SdfPassConfig>) {
+    setConfig((current) => {
+      const passes = [...current.passes] as [SdfPassConfig, SdfPassConfig];
+      passes[index] = { ...passes[index], ...update };
+
+      return { ...current, passes };
+    });
+  }
+
+  function renderPassControls(index: 0 | 1, label: string) {
+    const pass = config.passes[index];
+
+    return (
+      <div className="sdf-dev-pass">
+        <div className="sdf-dev-pass-title">{label}</div>
+        {index === 1 ? (
+          <label className="sdf-dev-toggle">
+            enabled
+            <input
+              checked={pass.enabled}
+              onChange={(event) => updatePass(index, { enabled: event.target.checked })}
+              type="checkbox"
+            />
+          </label>
+        ) : null}
         <label>
           spread
           <input
             max="1600"
             min="20"
-            onChange={(event) => updateConfig({ spread: Number(event.target.value) })}
+            onChange={(event) => updatePass(index, { spread: Number(event.target.value) })}
             step="10"
             type="range"
-            value={config.spread}
+            value={pass.spread}
           />
-          <span>{config.spread}</span>
+          <span>{pass.spread}</span>
         </label>
+        <label>
+          seed
+          <input
+            max="255"
+            min="1"
+            onChange={(event) => updatePass(index, { seedThreshold: Number(event.target.value) })}
+            step="1"
+            type="range"
+            value={pass.seedThreshold}
+          />
+          <span>{pass.seedThreshold}</span>
+        </label>
+        <label className="sdf-dev-toggle">
+          lines
+          <input
+            checked={pass.showLines}
+            onChange={(event) => updatePass(index, { showLines: event.target.checked })}
+            type="checkbox"
+          />
+        </label>
+        <label className="sdf-dev-toggle">
+          threshold
+          <input
+            checked={pass.thresholdLines}
+            onChange={(event) => updatePass(index, { thresholdLines: event.target.checked })}
+            type="checkbox"
+          />
+        </label>
+        <label className="sdf-dev-toggle">
+          invert
+          <input
+            checked={pass.invert}
+            onChange={(event) => updatePass(index, { invert: event.target.checked })}
+            type="checkbox"
+          />
+        </label>
+        <label>
+          modulo
+          <input
+            max="64"
+            min="1"
+            onChange={(event) => updatePass(index, { lineModulo: Number(event.target.value) })}
+            step="1"
+            type="range"
+            value={pass.lineModulo}
+          />
+          <span>{pass.lineModulo}</span>
+        </label>
+        <label>
+          thickness
+          <input
+            max="0.48"
+            min="0.01"
+            onChange={(event) => updatePass(index, { lineThickness: Number(event.target.value) })}
+            step="0.01"
+            type="range"
+            value={pass.lineThickness}
+          />
+          <span>{pass.lineThickness.toFixed(2)}</span>
+        </label>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p5-home" ref={hostRef}>
+      <div className="sdf-dev-panel">
         <label>
           resolution
           <input
@@ -451,18 +588,6 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           />
           <span>{config.resolutionScale.toFixed(2)}</span>
         </label>
-        <label>
-          threshold
-          <input
-            max="255"
-            min="1"
-            onChange={(event) => updateConfig({ seedThreshold: Number(event.target.value) })}
-            step="1"
-            type="range"
-            value={config.seedThreshold}
-          />
-          <span>{config.seedThreshold}</span>
-        </label>
         <label className="sdf-dev-toggle">
           carets
           <input
@@ -471,54 +596,8 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             type="checkbox"
           />
         </label>
-        <label className="sdf-dev-toggle">
-          lines
-          <input
-            checked={config.showLines}
-            onChange={(event) => updateConfig({ showLines: event.target.checked })}
-            type="checkbox"
-          />
-        </label>
-        <label className="sdf-dev-toggle">
-          threshold
-          <input
-            checked={config.thresholdLines}
-            onChange={(event) => updateConfig({ thresholdLines: event.target.checked })}
-            type="checkbox"
-          />
-        </label>
-        <label className="sdf-dev-toggle">
-          invert
-          <input
-            checked={config.invert}
-            onChange={(event) => updateConfig({ invert: event.target.checked })}
-            type="checkbox"
-          />
-        </label>
-        <label>
-          modulo
-          <input
-            max="64"
-            min="1"
-            onChange={(event) => updateConfig({ lineModulo: Number(event.target.value) })}
-            step="1"
-            type="range"
-            value={config.lineModulo}
-          />
-          <span>{config.lineModulo}</span>
-        </label>
-        <label>
-          thickness
-          <input
-            max="0.48"
-            min="0.01"
-            onChange={(event) => updateConfig({ lineThickness: Number(event.target.value) })}
-            step="0.01"
-            type="range"
-            value={config.lineThickness}
-          />
-          <span>{config.lineThickness.toFixed(2)}</span>
-        </label>
+        {renderPassControls(0, 'pass 1')}
+        {renderPassControls(1, 'pass 2')}
       </div>
       <nav className="p5-home-nav visually-hidden" aria-label="Website sections">
         {items.map((item) => (

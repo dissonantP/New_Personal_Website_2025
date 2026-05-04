@@ -63,6 +63,8 @@ a {
   display: grid;
   gap: 8px;
   width: min(280px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  overflow: auto;
   padding: 12px;
   background: rgb(17 17 17 / 86%);
   color: #f4f1ea;
@@ -84,6 +86,19 @@ a {
 
 .sdf-dev-panel span {
   text-align: right;
+}
+
+.sdf-dev-pass {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgb(244 241 234 / 22%);
+}
+
+.sdf-dev-pass-title {
+  color: #20c05c;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .sdf-dev-toggle {
