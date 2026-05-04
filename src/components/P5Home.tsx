@@ -37,6 +37,9 @@ type SdfPassConfig = {
   cutoffMax: number;
   noiseAmplitude: number;
   noiseFrequency: number;
+  minColor: string;
+  maxColor: string;
+  colorSpeed: number;
 };
 
 type SdfConfig = {
@@ -73,6 +76,9 @@ const sdfPresets = {
         cutoffMax: 1,
         noiseAmplitude: 30,
         noiseFrequency: 0.035,
+        minColor: '#ffffff',
+        maxColor: '#ffffff',
+        colorSpeed: 0,
       },
       {
         enabled: false,
@@ -87,6 +93,9 @@ const sdfPresets = {
         cutoffMax: 1,
         noiseAmplitude: 0,
         noiseFrequency: 0.012,
+        minColor: '#ffffff',
+        maxColor: '#ffffff',
+        colorSpeed: 0,
       },
     ],
   },
@@ -160,6 +169,32 @@ function smoothstep(edge0: number, edge1: number, value: number) {
 
 function sampleFalloff(value: number) {
   return 1 - smoothstep(0, 1, value);
+}
+
+function parseHexColor(color: string): [number, number, number] {
+  const normalized = color.replace('#', '');
+
+  if (!/^[\da-f]{6}$/i.test(normalized)) {
+    return [255, 255, 255];
+  }
+
+  return [
+    Number.parseInt(normalized.slice(0, 2), 16),
+    Number.parseInt(normalized.slice(2, 4), 16),
+    Number.parseInt(normalized.slice(4, 6), 16),
+  ];
+}
+
+function mixColor(
+  start: [number, number, number],
+  end: [number, number, number],
+  value: number,
+): [number, number, number] {
+  return [
+    Math.round(start[0] + (end[0] - start[0]) * value),
+    Math.round(start[1] + (end[1] - start[1]) * value),
+    Math.round(start[2] + (end[2] - start[2]) * value),
+  ];
 }
 
 function distanceTransform1d(input: Float32Array, output: Float32Array, length: number) {
@@ -268,10 +303,13 @@ function runSdfLinePass(
   p: p5,
   config: SdfPassConfig,
   sourceScale: number,
+  colorPhase = 0,
 ) {
   const field = createDistanceField(source, config.seedThreshold, sourceScale);
   const image = p.createImage(field.width, field.height);
   const scaledSpread = config.spread * field.sourceScale;
+  const minColor = parseHexColor(config.minColor);
+  const maxColor = parseHexColor(config.maxColor);
 
   image.loadPixels();
 
@@ -302,10 +340,13 @@ function runSdfLinePass(
         : brightness * lineMask;
       const output = config.showLines ? line : brightness;
       const value = Math.round((config.invert && !config.thresholdLines ? 1 - output : output) * 255);
+      const lineColorT = (((t + colorPhase) % 1) + 1) % 1;
+      const lineColor = mixColor(minColor, maxColor, lineColorT);
+      const useLineColor = config.showLines && thresholdBand > 0;
 
-      image.pixels[pixelIndex] = value;
-      image.pixels[pixelIndex + 1] = value;
-      image.pixels[pixelIndex + 2] = value;
+      image.pixels[pixelIndex] = useLineColor ? lineColor[0] : value;
+      image.pixels[pixelIndex + 1] = useLineColor ? lineColor[1] : value;
+      image.pixels[pixelIndex + 2] = useLineColor ? lineColor[2] : value;
       image.pixels[pixelIndex + 3] = 255;
     }
   }
@@ -323,11 +364,9 @@ function compositeMax(base: p5.Image, overlay: p5.Image, p: p5) {
   image.loadPixels();
 
   for (let index = 0; index < image.pixels.length; index += 4) {
-    const value = Math.max(base.pixels[index], overlay.pixels[index]);
-
-    image.pixels[index] = value;
-    image.pixels[index + 1] = value;
-    image.pixels[index + 2] = value;
+    image.pixels[index] = Math.max(base.pixels[index], overlay.pixels[index]);
+    image.pixels[index + 1] = Math.max(base.pixels[index + 1], overlay.pixels[index + 1]);
+    image.pixels[index + 2] = Math.max(base.pixels[index + 2], overlay.pixels[index + 2]);
     image.pixels[index + 3] = 255;
   }
 
@@ -341,6 +380,7 @@ function renderSdfPasses(
   p: p5,
   config: SdfConfig,
   sourceScale: number,
+  elapsedSeconds = 0,
 ) {
   let image: p5.Image | null = null;
 
@@ -349,11 +389,21 @@ function renderSdfPasses(
       return;
     }
 
-    const nextImage = runSdfLinePass(image ?? source, p, pass, sourceScale);
+    const nextImage = runSdfLinePass(
+      image ?? source,
+      p,
+      pass,
+      sourceScale,
+      elapsedSeconds * pass.colorSpeed,
+    );
     image = image ? compositeMax(image, nextImage, p) : nextImage;
   });
 
   return image;
+}
+
+function hasColorAnimation(config: SdfConfig) {
+  return config.passes.some((pass) => pass.enabled && pass.showLines && pass.colorSpeed !== 0);
 }
 
 export function P5Home({ items, onNavigate }: P5HomeProps) {
@@ -371,6 +421,8 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
     const sketch = (p: p5) => {
       let hoveredRowId: HomeItemId | null = null;
       let sdfImage: p5.Image | null = null;
+      let sdfSourceMask: p5.Graphics | null = null;
+      let sdfSourceScale = 1;
       let resizeTimer: number | null = null;
 
       function getInteractiveRow() {
@@ -446,6 +498,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
         const mask = p.createGraphics(width, height);
         const rows = getLayout(p, items, p.width, p.height);
 
+        sdfSourceMask?.remove();
         mask.pixelDensity(1);
         mask.background('#000000');
 
@@ -460,10 +513,16 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           mask.pop();
         }
 
-        sdfImage = renderSdfPasses(mask, p, config, useFullResolution ? 1 : scale);
-        mask.remove();
+        sdfSourceMask = mask;
+        sdfSourceScale = useFullResolution ? 1 : scale;
+        sdfImage = renderSdfPasses(mask, p, config, sdfSourceScale, p.millis() / 1000);
         renderHome();
-        p.noLoop();
+
+        if (hasColorAnimation(config)) {
+          p.loop();
+        } else {
+          p.noLoop();
+        }
       }
 
       function scheduleDistanceFieldRebuild() {
@@ -485,6 +544,15 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
         });
         p.pixelDensity(1);
         rebuildDistanceField();
+      };
+
+      p.draw = () => {
+        if (!sdfSourceMask || !hasColorAnimation(config)) {
+          return;
+        }
+
+        sdfImage = renderSdfPasses(sdfSourceMask, p, config, sdfSourceScale, p.millis() / 1000);
+        renderHome();
       };
 
       p.windowResized = () => {
@@ -752,6 +820,54 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             step="any"
             type="number"
             value={pass.noiseFrequency}
+          />
+        </label>
+        <label className="sdf-dev-color-row">
+          min color
+          <input
+            onChange={(event) => updatePass(index, { minColor: event.target.value })}
+            type="color"
+            value={pass.minColor}
+          />
+          <input
+            className="sdf-dev-color-value"
+            readOnly
+            value={pass.minColor}
+          />
+        </label>
+        <label className="sdf-dev-color-row">
+          max color
+          <input
+            onChange={(event) => updatePass(index, { maxColor: event.target.value })}
+            type="color"
+            value={pass.maxColor}
+          />
+          <input
+            className="sdf-dev-color-value"
+            readOnly
+            value={pass.maxColor}
+          />
+        </label>
+        <label>
+          color speed
+          <input
+            max="4"
+            min="-4"
+            onChange={(event) => updatePass(index, { colorSpeed: Number(event.target.value) })}
+            step="0.01"
+            type="range"
+            value={pass.colorSpeed}
+          />
+          <input
+            className="sdf-dev-number"
+            onChange={(event) =>
+              updateNumericInput(event.target.value, (value) =>
+                updatePass(index, { colorSpeed: value }),
+              )
+            }
+            step="any"
+            type="number"
+            value={pass.colorSpeed}
           />
         </label>
       </div>
