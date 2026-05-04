@@ -58,8 +58,8 @@ export function createTextSceneSketch<
         null;
       let renderedImage: p5.Image | null = null;
       let resizeTimer: number | null = null;
-      let content = getContent(p, p.width, p.height);
-      let layout = content.blocks;
+      let content: TContent | null = null;
+      let layout: TContent['blocks'] = [];
 
       function getInteractiveBlock() {
         return layout.find((block) => {
@@ -86,6 +86,10 @@ export function createTextSceneSketch<
       }
 
       function renderScene() {
+        if (!content) {
+          return;
+        }
+
         content = getContent(p, p.width, p.height);
         layout = content.blocks;
 
@@ -149,6 +153,8 @@ export function createTextSceneSketch<
           renderScene();
         });
         p.pixelDensity(1);
+        content = getContent(p, p.width, p.height);
+        layout = content.blocks;
         rebuildEffect();
       };
 
