@@ -40,6 +40,7 @@ type SdfPassConfig = {
   pulseWidth: number;
   pulseSpeed: number;
   pulseInterval: number;
+  pulseColor: string;
 };
 
 type SdfConfig = {
@@ -86,6 +87,7 @@ const sdfPresets = {
         pulseWidth: 0,
         pulseSpeed: 0,
         pulseInterval: 2,
+        pulseColor: '#000000',
       },
       {
         enabled: false,
@@ -103,6 +105,7 @@ const sdfPresets = {
         pulseWidth: 0,
         pulseSpeed: 0,
         pulseInterval: 2,
+        pulseColor: '#000000',
       },
     ],
   },
@@ -190,6 +193,20 @@ function samplePulse(t: number, elapsedSeconds: number, config: SdfPassConfig) {
   }
 
   return Math.abs(t - pulseCenter) <= config.pulseWidth / 2 ? 1 : 0;
+}
+
+function parseHexColor(color: string): [number, number, number] {
+  const normalized = color.replace('#', '');
+
+  if (!/^[\da-f]{6}$/i.test(normalized)) {
+    return [0, 0, 0];
+  }
+
+  return [
+    Number.parseInt(normalized.slice(0, 2), 16),
+    Number.parseInt(normalized.slice(2, 4), 16),
+    Number.parseInt(normalized.slice(4, 6), 16),
+  ];
 }
 
 function distanceTransform1d(input: Float32Array, output: Float32Array, length: number) {
@@ -430,14 +447,16 @@ function renderSdfPulseFrame(
       return;
     }
 
+    const pulseColor = parseHexColor(config.pulseColor);
+
     for (let index = 0; index < pulsePositions.length; index += 1) {
       const t = pulsePositions[index];
 
       if (samplePulse(t, elapsedSeconds, config) > 0) {
         const pixelIndex = pulsePixels[index];
-        image.pixels[pixelIndex] = 0;
-        image.pixels[pixelIndex + 1] = 0;
-        image.pixels[pixelIndex + 2] = 0;
+        image.pixels[pixelIndex] = pulseColor[0];
+        image.pixels[pixelIndex + 1] = pulseColor[1];
+        image.pixels[pixelIndex + 2] = pulseColor[2];
       }
     }
   });
@@ -933,6 +952,19 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             step="any"
             type="number"
             value={pass.pulseInterval}
+          />
+        </label>
+        <label className="sdf-dev-color-row">
+          pulse color
+          <input
+            onChange={(event) => updatePass(index, { pulseColor: event.target.value })}
+            type="color"
+            value={pass.pulseColor}
+          />
+          <input
+            className="sdf-dev-color-value"
+            readOnly
+            value={pass.pulseColor}
           />
         </label>
       </div>
