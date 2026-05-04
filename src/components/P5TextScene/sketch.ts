@@ -2,9 +2,6 @@ import p5 from 'p5';
 
 import type { TextSceneBlock, TextSceneContent, TextSceneEffects } from './types';
 
-const DEFAULT_FONT_STACK =
-  'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
-
 function clamp(min: number, value: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
@@ -12,10 +9,11 @@ function clamp(min: number, value: number, max: number) {
 function drawBlocks<TTarget extends string>(
   surface: p5 | p5.Graphics,
   blocks: Array<TextSceneBlock<TTarget>>,
+  fontFamily: string,
   hoveredBlockId: string | null,
   useMask: boolean,
 ) {
-  surface.textFont(DEFAULT_FONT_STACK);
+  surface.textFont(fontFamily);
   surface.noStroke();
 
   blocks.forEach((block) => {
@@ -97,7 +95,7 @@ export function createTextSceneSketch<
           p.image(renderedImage, 0, 0, p.width, p.height);
         }
 
-        drawBlocks(p, layout, hoveredBlockId, false);
+        drawBlocks(p, layout, content.fontFamily, hoveredBlockId, false);
       }
 
       function rebuildEffect() {
@@ -107,7 +105,7 @@ export function createTextSceneSketch<
         const mask = p.createGraphics(p.width, p.height);
         mask.pixelDensity(1);
         mask.background('#000000');
-        drawBlocks(mask, layout, null, true);
+        drawBlocks(mask, layout, content.fontFamily, null, true);
 
         effectRuntime = effects.build({
           p,
