@@ -84,9 +84,9 @@ const sdfPresets = {
         cutoffMax: 1,
         noiseAmplitude: 30,
         noiseFrequency: 0.035,
-        pulseWidth: 0,
-        pulseSpeed: 0,
-        pulseInterval: 2,
+        pulseWidth: 0.02,
+        pulseSpeed: 0.2,
+        pulseInterval: 3,
         pulseColor: '#000000',
       },
       {
