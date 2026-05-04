@@ -55,6 +55,11 @@ type SdfField = {
   sourceScale: number;
 };
 
+type SdfPassRender = {
+  config: SdfPassConfig;
+  field: SdfField;
+};
+
 const title = 'Max Pleaner';
 const fontStack =
   'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
@@ -298,14 +303,12 @@ function createDistanceField(
   };
 }
 
-function runSdfLinePass(
-  source: p5.Graphics | p5.Image,
+function renderSdfLinePass(
+  field: SdfField,
   p: p5,
   config: SdfPassConfig,
-  sourceScale: number,
   colorPhase = 0,
 ) {
-  const field = createDistanceField(source, config.seedThreshold, sourceScale);
   const image = p.createImage(field.width, field.height);
   const scaledSpread = config.spread * field.sourceScale;
   const minColor = parseHexColor(config.minColor);
@@ -356,6 +359,30 @@ function runSdfLinePass(
   return image;
 }
 
+function buildSdfPassPipeline(
+  source: p5.Graphics,
+  p: p5,
+  config: SdfConfig,
+  sourceScale: number,
+) {
+  const pipeline: SdfPassRender[] = [];
+  let image: p5.Image | null = null;
+
+  config.passes.forEach((pass) => {
+    if (!pass.enabled || pass.spread <= 0) {
+      return;
+    }
+
+    const field = createDistanceField(image ?? source, pass.seedThreshold, sourceScale);
+    const nextImage = renderSdfLinePass(field, p, pass);
+
+    pipeline.push({ config: pass, field });
+    image = image ? compositeMax(image, nextImage, p) : nextImage;
+  });
+
+  return pipeline;
+}
+
 function compositeMax(base: p5.Image, overlay: p5.Image, p: p5) {
   const image = p.createImage(base.width, base.height);
 
@@ -376,26 +403,14 @@ function compositeMax(base: p5.Image, overlay: p5.Image, p: p5) {
 }
 
 function renderSdfPasses(
-  source: p5.Graphics,
+  pipeline: SdfPassRender[],
   p: p5,
-  config: SdfConfig,
-  sourceScale: number,
   elapsedSeconds = 0,
 ) {
   let image: p5.Image | null = null;
 
-  config.passes.forEach((pass) => {
-    if (!pass.enabled || pass.spread <= 0) {
-      return;
-    }
-
-    const nextImage = runSdfLinePass(
-      image ?? source,
-      p,
-      pass,
-      sourceScale,
-      elapsedSeconds * pass.colorSpeed,
-    );
+  pipeline.forEach(({ config, field }) => {
+    const nextImage = renderSdfLinePass(field, p, config, elapsedSeconds * config.colorSpeed);
     image = image ? compositeMax(image, nextImage, p) : nextImage;
   });
 
@@ -421,8 +436,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
     const sketch = (p: p5) => {
       let hoveredRowId: HomeItemId | null = null;
       let sdfImage: p5.Image | null = null;
-      let sdfSourceMask: p5.Graphics | null = null;
-      let sdfSourceScale = 1;
+      let sdfPipeline: SdfPassRender[] = [];
       let resizeTimer: number | null = null;
 
       function getInteractiveRow() {
@@ -498,7 +512,6 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
         const mask = p.createGraphics(width, height);
         const rows = getLayout(p, items, p.width, p.height);
 
-        sdfSourceMask?.remove();
         mask.pixelDensity(1);
         mask.background('#000000');
 
@@ -513,9 +526,9 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           mask.pop();
         }
 
-        sdfSourceMask = mask;
-        sdfSourceScale = useFullResolution ? 1 : scale;
-        sdfImage = renderSdfPasses(mask, p, config, sdfSourceScale, p.millis() / 1000);
+        sdfPipeline = buildSdfPassPipeline(mask, p, config, useFullResolution ? 1 : scale);
+        sdfImage = renderSdfPasses(sdfPipeline, p, p.millis() / 1000);
+        mask.remove();
         renderHome();
 
         if (hasColorAnimation(config)) {
@@ -547,11 +560,11 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
       };
 
       p.draw = () => {
-        if (!sdfSourceMask || !hasColorAnimation(config)) {
+        if (!sdfPipeline.length || !hasColorAnimation(config)) {
           return;
         }
 
-        sdfImage = renderSdfPasses(sdfSourceMask, p, config, sdfSourceScale, p.millis() / 1000);
+        sdfImage = renderSdfPasses(sdfPipeline, p, p.millis() / 1000);
         renderHome();
       };
 
