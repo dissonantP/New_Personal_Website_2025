@@ -19,3 +19,10 @@ export function getHomeContent(
     blocks: getHomeBlocks(p, items, width, height),
   };
 }
+
+export function getHomeItems(): HomeItem[] {
+  return [
+    { id: 'portfolio', label: 'portfolio' },
+    { id: 'services', label: 'services' },
+  ];
+}

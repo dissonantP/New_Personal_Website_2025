@@ -6,23 +6,6 @@ import { SoftwareSection } from './sections/SoftwareSection';
 
 type SectionId = 'home' | 'portfolio' | 'services';
 
-const sections = {
-  portfolio: {
-    label: 'portfolio',
-  },
-  services: {
-    label: 'services',
-  },
-} satisfies Record<Exclude<SectionId, 'home'>, {
-  label: string;
-}>;
-
-const sectionLinks = Object.entries(sections) as Array<
-  [Exclude<SectionId, 'home'>, (typeof sections)[Exclude<SectionId, 'home'>]]
->;
-
-const homeItems = sectionLinks.map(([id, item]) => ({ id, label: item.label }));
-
 export function App() {
   const [section, setSection] = useState<SectionId>('home');
   const [isFading, setIsFading] = useState(false);
@@ -67,7 +50,7 @@ export function App() {
         }`}
       >
         {section === 'home' ? (
-          <P5Home items={homeItems} onNavigate={navigate} />
+          <P5Home onNavigate={navigate} />
         ) : (
           renderSection()
         )}

@@ -3,16 +3,16 @@ import { useCallback, useMemo } from 'react';
 
 import { P5TextScene } from './P5TextScene';
 import { createTextSceneSketch } from './P5TextScene/sketch';
-import type { HomeItem, HomeItemId } from './P5Home/types';
-import { getHomeContent } from './P5Home/content';
+import type { HomeItemId } from './P5Home/types';
+import { getHomeContent, getHomeItems } from './P5Home/content';
 import { createHomeEffects } from './P5Home/effects';
 
 type P5HomeProps = {
-  items: HomeItem[];
   onNavigate: (id: HomeItemId) => void;
 };
 
-export function P5Home({ items, onNavigate }: P5HomeProps) {
+export function P5Home({ onNavigate }: P5HomeProps) {
+  const items = useMemo(() => getHomeItems(), []);
   const getContent = useCallback(
     (p: p5, width: number, height: number) => getHomeContent(p, items, width, height),
     [items],
