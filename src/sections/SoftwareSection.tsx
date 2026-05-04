@@ -2,9 +2,10 @@ import { BigHeader } from '../components/BigHeader';
 
 type SoftwareSectionProps = {
   onBack: () => void;
+  title?: string;
 };
 
-export function SoftwareSection({ onBack }: SoftwareSectionProps) {
+export function SoftwareSection({ onBack, title = 'Software' }: SoftwareSectionProps) {
   return (
     <>
       <header className="page-header">
@@ -18,7 +19,7 @@ export function SoftwareSection({ onBack }: SoftwareSectionProps) {
         >
           &lt;
         </a>
-        <BigHeader className="page-title">Software</BigHeader>
+        <BigHeader className="page-title">{title}</BigHeader>
       </header>
       <p className="page-blurb">
         <p>I wrote my first lines of code in 2013, just after finishing my Politics degree.</p>

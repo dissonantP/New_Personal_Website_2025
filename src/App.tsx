@@ -1,21 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { Box } from './components/Box';
 import { P5Home } from './components/P5Home';
-import { ArtSection } from './sections/ArtSection';
-import { MusicSection } from './sections/MusicSection';
+import { ServicesSection } from './sections/ServicesSection';
 import { SoftwareSection } from './sections/SoftwareSection';
 
-type SectionId = 'home' | 'software' | 'creative' | 'music';
+type SectionId = 'home' | 'portfolio' | 'services';
 
 const sections = {
-  software: {
-    label: 'software',
+  portfolio: {
+    label: 'portfolio',
   },
-  creative: {
-    label: 'art',
-  },
-  music: {
-    label: 'music',
+  services: {
+    label: 'services',
   },
 } satisfies Record<Exclude<SectionId, 'home'>, {
   label: string;
@@ -54,12 +50,10 @@ export function App() {
 
   function renderSection() {
     switch (section) {
-      case 'software':
-        return <SoftwareSection onBack={() => navigate('home')} />;
-      case 'creative':
-        return <ArtSection onBack={() => navigate('home')} />;
-      case 'music':
-        return <MusicSection onBack={() => navigate('home')} />;
+      case 'portfolio':
+        return <SoftwareSection onBack={() => navigate('home')} title="Portfolio" />;
+      case 'services':
+        return <ServicesSection onBack={() => navigate('home')} />;
       default:
         return null;
     }

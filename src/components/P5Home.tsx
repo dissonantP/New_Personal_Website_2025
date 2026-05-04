@@ -1,7 +1,7 @@
 import p5 from 'p5';
 import { useEffect, useRef } from 'react';
 
-type HomeItemId = 'software' | 'creative' | 'music';
+type HomeItemId = 'portfolio' | 'services';
 
 type HomeItem = {
   id: HomeItemId;
@@ -14,8 +14,9 @@ type P5HomeProps = {
 };
 
 type RowLayout = {
-  id: 'title' | HomeItemId;
+  id: 'title' | 'description' | HomeItemId;
   label: string;
+  lines: string[];
   x: number;
   y: number;
   width: number;
@@ -65,6 +66,7 @@ type SdfPassRender = {
 };
 
 const title = 'Max Pleaner';
+const descriptionLines = ['does', '  software', '  art', '  media', '  and music'];
 const fontStack =
   'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
 const sdfPresets = {
@@ -121,6 +123,10 @@ function clamp(min: number, value: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+function isHomeItemId(id: RowLayout['id']): id is HomeItemId {
+  return id === 'portfolio' || id === 'services';
+}
+
 function getHomeOffset(width: number) {
   if (width <= 640) {
     return clamp(42, width * 0.14, 72);
@@ -129,44 +135,78 @@ function getHomeOffset(width: number) {
   return clamp(72, width * 0.095, 140);
 }
 
+function getRowFontSize(rowId: RowLayout['id'], width: number) {
+  if (rowId === 'title') {
+    return clamp(26, width * 0.05, 44);
+  }
+
+  if (rowId === 'description') {
+    return clamp(18, width * 0.035, 30);
+  }
+
+  return clamp(24, width * 0.045, 40);
+}
+
 function getLayout(
   p: p5 | p5.Graphics,
   items: HomeItem[],
   width: number,
   height: number,
 ): RowLayout[] {
-  const fontSize = clamp(26, width * 0.05, 44);
   const paddingX = clamp(20, width * 0.05, 56);
-  const paddingY = 22;
-  const rowHeight = fontSize * 0.95 + paddingY * 2;
-  const rowGap = clamp(56, height * 0.105, 110);
+  const paddingY = clamp(18, height * 0.028, 28);
+  const rowGap = clamp(42, height * 0.075, 82);
   const homeOffset = getHomeOffset(width);
-  const rows = [{ id: 'title' as const, label: title }, ...items];
-  const totalHeight = rows.length * rowHeight + (rows.length - 1) * rowGap;
-  const startY = (height - totalHeight) / 2;
+  const rows = [
+    { id: 'title' as const, label: title, lines: [title] },
+    { id: 'description' as const, label: descriptionLines.join('\n'), lines: descriptionLines },
+    ...items.map((item) => ({ ...item, lines: [item.label] })),
+  ];
+  const layoutRows = rows.map((row) => {
+    const fontSize = getRowFontSize(row.id, width);
+    const lineHeight = fontSize * (row.id === 'description' ? 1.15 : 0.95);
+    const rowHeight = lineHeight * row.lines.length + paddingY * 2;
 
-  p.textFont(fontStack);
-  p.textSize(fontSize);
+    p.textFont(fontStack);
+    p.textSize(fontSize);
 
-  return rows.map((row, index) => {
-    const interactive = row.id !== 'title';
-    const textWidth = p.textWidth(row.label);
+    const textWidth = Math.max(...row.lines.map((line) => p.textWidth(line)));
     const rowWidth = textWidth + paddingX * 2;
-    const centeredX = (width - rowWidth) / 2;
-    const x =
-      row.id === 'title'
-        ? centeredX
-        : centeredX + homeOffset * (index % 2 === 1 ? 1 : -1);
 
     return {
       ...row,
+      fontSize,
+      rowHeight,
+      rowWidth,
+    };
+  });
+  const totalHeight =
+    layoutRows.reduce((sum, row) => sum + row.rowHeight, 0) + (layoutRows.length - 1) * rowGap;
+  const startY = (height - totalHeight) / 2;
+  let y = startY;
+
+  return layoutRows.map((row, index) => {
+    const interactive = row.id !== 'title' && row.id !== 'description';
+    const centeredX = (width - row.rowWidth) / 2;
+    const x =
+      row.id === 'title'
+        ? centeredX
+        : centeredX + homeOffset * (index % 2 === 0 ? 1 : -1);
+    const layout = {
+      id: row.id,
+      label: row.label,
+      lines: row.lines,
       x,
-      y: startY + index * (rowHeight + rowGap),
-      width: rowWidth,
-      height: rowHeight,
+      y,
+      width: row.rowWidth,
+      height: row.rowHeight,
       interactive,
       weight: row.id === 'title' ? 900 : 700,
     };
+
+    y += row.rowHeight + rowGap;
+
+    return layout;
   });
 }
 
@@ -512,7 +552,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
 
       function updateHover() {
         const row = getInteractiveRow();
-        const nextHoveredRowId = row && row.id !== 'title' ? row.id : null;
+        const nextHoveredRowId = row && isHomeItemId(row.id) ? row.id : null;
 
         if (nextHoveredRowId !== hoveredRowId) {
           hoveredRowId = nextHoveredRowId;
@@ -533,21 +573,27 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
         surface.noStroke();
 
         rows.forEach((row) => {
-          const fontSize = clamp(26, layoutWidth * 0.05, 44);
+          const fontSize = getRowFontSize(row.id, layoutWidth);
           const paddingX = clamp(20, layoutWidth * 0.05, 56);
           const isHovered = row.id === hoveredRowId;
           const isLink = row.interactive;
           const labelX = row.x + paddingX;
-          const labelY = row.y + row.height / 2;
-          const textWidth = surface.textWidth(row.label);
+          const lineHeight = fontSize * (row.id === 'description' ? 1.15 : 0.95);
+          const textTop = row.y + (row.height - lineHeight * row.lines.length) / 2;
 
-          surface.fill(useMask ? '#ffffff' : isHovered ? '#39e476' : isLink ? '#20c05c' : '#f4f1ea');
+          surface.fill(
+            useMask ? '#ffffff' : isHovered ? '#39e476' : isLink ? '#20c05c' : '#f4f1ea',
+          );
           surface.textStyle('bold');
           surface.textSize(fontSize);
-          surface.text(row.label, labelX, labelY);
+
+          row.lines.forEach((line, index) => {
+            surface.text(line, labelX, textTop + lineHeight * index + lineHeight / 2);
+          });
 
           if (isLink) {
-            const underlineY = labelY + fontSize * 0.45;
+            const underlineY = textTop + lineHeight + fontSize * 0.13;
+            const textWidth = surface.textWidth(row.label);
             surface.stroke(useMask ? '#ffffff' : isHovered ? '#39e476' : '#20c05c');
             surface.strokeWeight(Math.max(1, fontSize * 0.055));
             surface.line(labelX, underlineY, labelX + textWidth, underlineY);
@@ -648,7 +694,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
       p.mouseClicked = () => {
         const row = getInteractiveRow();
 
-        if (row && row.id !== 'title') {
+        if (row && isHomeItemId(row.id)) {
           navigateRef.current(row.id);
         }
       };
