@@ -57,7 +57,9 @@ type SdfField = {
 
 type SdfPassRender = {
   config: SdfPassConfig;
-  field: SdfField;
+  image: p5.Image;
+  pulsePixels: Uint32Array;
+  pulsePositions: Float32Array;
 };
 
 const title = 'Max Pleaner';
@@ -295,9 +297,10 @@ function renderSdfLinePass(
   field: SdfField,
   p: p5,
   config: SdfPassConfig,
-  elapsedSeconds = 0,
 ) {
   const image = p.createImage(field.width, field.height);
+  const pulsePixelList: number[] = [];
+  const pulsePositionList: number[] = [];
   const scaledSpread = config.spread * field.sourceScale;
 
   image.loadPixels();
@@ -329,19 +332,26 @@ function renderSdfLinePass(
         : brightness * lineMask;
       const output = config.showLines ? line : brightness;
       const value = Math.round((config.invert && !config.thresholdLines ? 1 - output : output) * 255);
-      const pulse = config.showLines && thresholdBand > 0 ? samplePulse(t, elapsedSeconds, config) : 0;
-      const outputValue = pulse > 0 ? 0 : value;
 
-      image.pixels[pixelIndex] = outputValue;
-      image.pixels[pixelIndex + 1] = outputValue;
-      image.pixels[pixelIndex + 2] = outputValue;
+      if (config.showLines && thresholdBand > 0) {
+        pulsePixelList.push(pixelIndex);
+        pulsePositionList.push(t);
+      }
+
+      image.pixels[pixelIndex] = value;
+      image.pixels[pixelIndex + 1] = value;
+      image.pixels[pixelIndex + 2] = value;
       image.pixels[pixelIndex + 3] = 255;
     }
   }
 
   image.updatePixels();
 
-  return image;
+  return {
+    image,
+    pulsePixels: Uint32Array.from(pulsePixelList),
+    pulsePositions: Float32Array.from(pulsePositionList),
+  };
 }
 
 function buildSdfPassPipeline(
@@ -359,10 +369,10 @@ function buildSdfPassPipeline(
     }
 
     const field = createDistanceField(image ?? source, pass.seedThreshold, sourceScale);
-    const nextImage = renderSdfLinePass(field, p, pass);
+    const nextPass = renderSdfLinePass(field, p, pass);
 
-    pipeline.push({ config: pass, field });
-    image = image ? compositeMax(image, nextImage, p) : nextImage;
+    pipeline.push({ config: pass, ...nextPass });
+    image = image ? compositeMax(image, nextPass.image, p) : nextPass.image;
   });
 
   return pipeline;
@@ -390,14 +400,49 @@ function compositeMax(base: p5.Image, overlay: p5.Image, p: p5) {
 function renderSdfPasses(
   pipeline: SdfPassRender[],
   p: p5,
-  elapsedSeconds = 0,
 ) {
   let image: p5.Image | null = null;
 
-  pipeline.forEach(({ config, field }) => {
-    const nextImage = renderSdfLinePass(field, p, config, elapsedSeconds);
-    image = image ? compositeMax(image, nextImage, p) : nextImage;
+  pipeline.forEach((pass) => {
+    image = image ? compositeMax(image, pass.image, p) : pass.image;
   });
+
+  return image;
+}
+
+function renderSdfPulseFrame(
+  pipeline: SdfPassRender[],
+  baseImage: p5.Image,
+  p: p5,
+  elapsedSeconds: number,
+) {
+  const image = p.createImage(baseImage.width, baseImage.height);
+
+  baseImage.loadPixels();
+  image.loadPixels();
+
+  for (let index = 0; index < baseImage.pixels.length; index += 1) {
+    image.pixels[index] = baseImage.pixels[index];
+  }
+
+  pipeline.forEach(({ config, pulsePixels, pulsePositions }) => {
+    if (config.pulseWidth <= 0 || config.pulseSpeed <= 0 || config.pulseInterval <= 0) {
+      return;
+    }
+
+    for (let index = 0; index < pulsePositions.length; index += 1) {
+      const t = pulsePositions[index];
+
+      if (samplePulse(t, elapsedSeconds, config) > 0) {
+        const pixelIndex = pulsePixels[index];
+        image.pixels[pixelIndex] = 0;
+        image.pixels[pixelIndex + 1] = 0;
+        image.pixels[pixelIndex + 2] = 0;
+      }
+    }
+  });
+
+  image.updatePixels();
 
   return image;
 }
@@ -422,6 +467,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
   useEffect(() => {
     const sketch = (p: p5) => {
       let hoveredRowId: HomeItemId | null = null;
+      let baseSdfImage: p5.Image | null = null;
       let sdfImage: p5.Image | null = null;
       let sdfPipeline: SdfPassRender[] = [];
       let resizeTimer: number | null = null;
@@ -514,7 +560,8 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
         }
 
         sdfPipeline = buildSdfPassPipeline(mask, p, config, useFullResolution ? 1 : scale);
-        sdfImage = renderSdfPasses(sdfPipeline, p, p.millis() / 1000);
+        baseSdfImage = renderSdfPasses(sdfPipeline, p);
+        sdfImage = baseSdfImage;
         mask.remove();
         renderHome();
 
@@ -547,11 +594,11 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
       };
 
       p.draw = () => {
-        if (!sdfPipeline.length || !hasPulseAnimation(config)) {
+        if (!sdfPipeline.length || !baseSdfImage || !hasPulseAnimation(config)) {
           return;
         }
 
-        sdfImage = renderSdfPasses(sdfPipeline, p, p.millis() / 1000);
+        sdfImage = renderSdfPulseFrame(sdfPipeline, baseSdfImage, p, p.millis() / 1000);
         renderHome();
       };
 
