@@ -13,12 +13,23 @@ export function getHomeFontStack() {
   return FONT_STACK;
 }
 
-export function getHomeOffset(width: number) {
-  if (width <= 640) {
-    return clamp(42, width * 0.14, 72);
+export function getHomeOffset(
+  width: number,
+  config: {
+    mobileWidth: number;
+    mobileMin: number;
+    mobileFactor: number;
+    mobileMax: number;
+    desktopMin: number;
+    desktopFactor: number;
+    desktopMax: number;
+  },
+) {
+  if (width <= config.mobileWidth) {
+    return clamp(config.mobileMin, width * config.mobileFactor, config.mobileMax);
   }
 
-  return clamp(72, width * 0.095, 140);
+  return clamp(config.desktopMin, width * config.desktopFactor, config.desktopMax);
 }
 
 export function measureBlock(

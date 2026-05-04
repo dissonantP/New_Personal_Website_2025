@@ -9,11 +9,27 @@ import type { HomeItemId } from './P5Home/types';
 import { createHomeEffects } from './P5Home/effects';
 import { clamp, getHomeOffset } from './P5Home/utils';
 
+const HOME_OFFSET_CONFIG = {
+  // Switch to the mobile offset curve at or below this width.
+  mobileWidth: 640,
+  // Minimum horizontal offset on small screens.
+  mobileMin: 42,
+  // How aggressively the offset grows with width on small screens.
+  mobileFactor: 0.14,
+  // Maximum horizontal offset on small screens.
+  mobileMax: 72,
+  // Minimum horizontal offset on larger screens.
+  desktopMin: 72,
+  // How aggressively the offset grows with width on larger screens.
+  desktopFactor: 0.095,
+  // Maximum horizontal offset on larger screens.
+  desktopMax: 140,
+};
+
 type P5HomeProps = {
   onNavigate: (id: HomeItemId) => void;
 };
 
-const HOME_BACKGROUND = '#111111';
 const HOME_BLOCKS: TextSceneBlockSpec<HomeItemId>[] = [
   {
     id: 'title',
@@ -23,18 +39,18 @@ const HOME_BLOCKS: TextSceneBlockSpec<HomeItemId>[] = [
     fontSize: (width) => clamp(26, width * 0.05, 44),
     lineGap: (fontSize) => fontSize * 0.15,
     layout: ({ width, height, metrics }) => ({
-      x: (width - metrics.width) / 2,
-      y: clamp(56, height * 0.18, height * 0.32),
+      x: width / 2 - (metrics.width / 3.2),
+      y: height / 4,
     }),
   },
   {
     id: 'description',
     lines: ['', 'does', '  software', '  art', '  media', '  and music'],
     interactive: false,
-    style: { fontSize: 0, align: 'center', fill: '#f4f1ea', fontWeight: 700 },
+    style: { fontSize: 0, align: 'left', fill: '#f4f1ea', fontWeight: 700 },
     fontSize: (width) => clamp(18, width * 0.035, 24),
     lineGap: (fontSize) => fontSize * 0.28,
-    layout: ({ width, height, metrics, previous }) => {
+    layout: ({ width, metrics, previous }) => {
       const title = previous.title;
 
       if (!title) {
@@ -42,8 +58,8 @@ const HOME_BLOCKS: TextSceneBlockSpec<HomeItemId>[] = [
       }
 
       return {
-        x: (width - metrics.width) / 2 + 20,
-        y: title.y + title.height + clamp(12, height * 0.02, 20),
+        x: width / 2 - (title.width / 1.5),
+        y: title.y + metrics.height * 1.6,
       };
     },
   },
@@ -55,17 +71,18 @@ const HOME_BLOCKS: TextSceneBlockSpec<HomeItemId>[] = [
     style: { fontSize: 0, align: 'left', fill: '#20c05c', hoverFill: '#39e476', fontWeight: 700 },
     fontSize: (width) => clamp(18, width * 0.035, 24),
     lineGap: (fontSize) => fontSize * 0.45,
-    layout: ({ width, height, metrics, previous }) => {
+    layout: ({ width, metrics, previous }) => {
+      const title = previous.title;
       const description = previous.description;
-      const offset = getHomeOffset(width);
+      const offset = getHomeOffset(width, HOME_OFFSET_CONFIG);
 
-      if (!description) {
+      if (!title || !description) {
         return { x: (width - metrics.width) / 2 - offset, y: 0 };
       }
 
       return {
-        x: (width - metrics.width) / 2 - offset,
-        y: description.y + description.height + clamp(44, height * 0.09, 88),
+        x: width / 2 + (title.width * 0.1),
+        y: description.y + metrics.height * 7,
       };
     },
   },
@@ -78,7 +95,7 @@ export function P5Home({ onNavigate }: P5HomeProps) {
         p,
         width,
         height,
-        background: HOME_BACKGROUND,
+        background: '#FFFFFF',
         blocks: HOME_BLOCKS,
       }),
     [],

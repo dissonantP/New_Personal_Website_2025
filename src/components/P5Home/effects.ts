@@ -16,11 +16,18 @@ type SdfPassConfig = {
   cutoffMax: number;
   noiseAmplitude: number;
   noiseFrequency: number;
-  lineColor: string;
+  startColor: string;
+  endColor: string;
+  gradientPow: number;
+  firstLineColor: string;
+  firstLineColorWidth: number;
+  firstLineColorStart: number;
   pulseWidth: number;
   pulseSpeed: number;
   pulseInterval: number;
-  pulseColor: string;
+  pulseStart: number;
+  pulseStartColor: string;
+  pulseEndColor: string;
   pulsePingPong: boolean;
 };
 
@@ -66,11 +73,18 @@ const sdfPresets = {
         cutoffMax: 1,
         noiseAmplitude: 80,
         noiseFrequency: 0.027,
-        lineColor: '#545454',
+        startColor: '#000000',
+        endColor: '#FFFFFF',
+        gradientPow: 1.4,
+        firstLineColor: '#006600',
+        firstLineColorWidth: 0.08,
+        firstLineColorStart: 0,
         pulseWidth: 0.02,
         pulseSpeed: 0.2,
         pulseInterval: 4,
-        pulseColor: '#000000',
+        pulseStart: 0,
+        pulseStartColor: '#006600',
+        pulseEndColor: '#000000',
         pulsePingPong: false,
       },
       {
@@ -86,11 +100,18 @@ const sdfPresets = {
         cutoffMax: 1,
         noiseAmplitude: 0,
         noiseFrequency: 0.012,
-        lineColor: '#ffffff',
+        startColor: '#ffffff',
+        endColor: '#ffffff',
+        gradientPow: 1,
+        firstLineColor: '#ffffff',
+        firstLineColorWidth: 0,
+        firstLineColorStart: 0,
         pulseWidth: 0,
         pulseSpeed: 0,
         pulseInterval: 2,
-        pulseColor: '#000000',
+        pulseStart: 0,
+        pulseStartColor: '#000000',
+        pulseEndColor: '#000000',
         pulsePingPong: false,
       },
     ],
@@ -117,21 +138,28 @@ function sampleFalloff(value: number) {
   return 1 - smoothstep(0, 1, value);
 }
 
-function samplePulse(t: number, elapsedSeconds: number, config: SdfPassConfig) {
+function samplePulseAmount(t: number, elapsedSeconds: number, config: SdfPassConfig) {
   if (config.pulseWidth <= 0 || config.pulseSpeed <= 0 || config.pulseInterval <= 0) {
     return 0;
   }
 
   const pulseProgress = (elapsedSeconds % config.pulseInterval) * config.pulseSpeed;
   const pulseCenter = config.pulsePingPong
-    ? 1 - Math.abs(1 - (pulseProgress % 2))
-    : pulseProgress;
+    ? config.pulseStart + (1 - config.pulseStart) * (1 - Math.abs(1 - (pulseProgress % 2)))
+    : config.pulseStart + pulseProgress;
 
   if (pulseCenter > 1 + config.pulseWidth) {
     return 0;
   }
 
-  return Math.abs(t - pulseCenter) <= config.pulseWidth / 2 ? 1 : 0;
+  const distanceFromCenter = Math.abs(t - pulseCenter);
+  const halfWidth = config.pulseWidth / 2;
+
+  if (distanceFromCenter > halfWidth) {
+    return 0;
+  }
+
+  return 1 - distanceFromCenter / halfWidth;
 }
 
 function parseHexColor(color: string): [number, number, number] {
@@ -146,6 +174,42 @@ function parseHexColor(color: string): [number, number, number] {
     Number.parseInt(normalized.slice(2, 4), 16),
     Number.parseInt(normalized.slice(4, 6), 16),
   ];
+}
+
+function lerpColor(
+  start: [number, number, number],
+  end: [number, number, number],
+  t: number,
+): [number, number, number] {
+  return [
+    Math.round(start[0] + (end[0] - start[0]) * t),
+    Math.round(start[1] + (end[1] - start[1]) * t),
+    Math.round(start[2] + (end[2] - start[2]) * t),
+  ];
+}
+
+function sampleGradientT(t: number, pow: number) {
+  if (pow <= 0) {
+    return t;
+  }
+
+  return Math.pow(clamp(0, t, 1), pow);
+}
+
+function sampleLineColor(
+  t: number,
+  startColor: [number, number, number],
+  endColor: [number, number, number],
+  firstLineColor: [number, number, number],
+  firstLineColorStart: number,
+  firstLineColorWidth: number,
+  gradientPow: number,
+) {
+  if (firstLineColorWidth > 0 && t >= firstLineColorStart && t <= firstLineColorStart + firstLineColorWidth) {
+    return firstLineColor;
+  }
+
+  return lerpColor(startColor, endColor, sampleGradientT(t, gradientPow));
 }
 
 function distanceTransform1d(input: Float32Array, output: Float32Array, length: number) {
@@ -254,7 +318,9 @@ function renderSdfLinePass(field: SdfField, p: p5, config: SdfPassConfig) {
   const pulsePixelList: number[] = [];
   const pulsePositionList: number[] = [];
   const scaledSpread = config.spread * field.sourceScale;
-  const lineColor = parseHexColor(config.lineColor);
+  const startColor = parseHexColor(config.startColor);
+  const endColor = parseHexColor(config.endColor);
+  const firstLineColor = parseHexColor(config.firstLineColor);
 
   image.loadPixels();
 
@@ -291,6 +357,15 @@ function renderSdfLinePass(field: SdfField, p: p5, config: SdfPassConfig) {
         pulsePositionList.push(t);
       }
 
+      const lineColor = sampleLineColor(
+        t,
+        startColor,
+        endColor,
+        firstLineColor,
+        config.firstLineColorStart,
+        config.firstLineColorWidth,
+        config.gradientPow,
+      );
       image.pixels[pixelIndex] = config.showLines && thresholdBand > 0 ? lineColor[0] : value;
       image.pixels[pixelIndex + 1] = config.showLines && thresholdBand > 0 ? lineColor[1] : value;
       image.pixels[pixelIndex + 2] = config.showLines && thresholdBand > 0 ? lineColor[2] : value;
@@ -380,13 +455,16 @@ function renderSdfPulseFrame(
       return;
     }
 
-    const pulseColor = parseHexColor(config.pulseColor);
+    const pulseStartColor = parseHexColor(config.pulseStartColor);
+    const pulseEndColor = parseHexColor(config.pulseEndColor);
 
     for (let index = 0; index < pulsePositions.length; index += 1) {
       const t = pulsePositions[index];
+      const pulseAmount = samplePulseAmount(t, elapsedSeconds, config);
 
-      if (samplePulse(t, elapsedSeconds, config) > 0) {
+      if (pulseAmount > 0) {
         const pixelIndex = pulsePixels[index];
+        const pulseColor = lerpColor(pulseStartColor, pulseEndColor, 1 - pulseAmount);
         image.pixels[pixelIndex] = pulseColor[0];
         image.pixels[pixelIndex + 1] = pulseColor[1];
         image.pixels[pixelIndex + 2] = pulseColor[2];
