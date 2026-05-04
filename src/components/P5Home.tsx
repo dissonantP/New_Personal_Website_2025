@@ -7,9 +7,7 @@ import type { HomeItemId, HomeTextBlock, HomeTextContent } from './P5Home/types'
 import { createHomeEffects } from './P5Home/effects';
 import {
   clamp,
-  getBlockFontSize,
   getHomeFontStack,
-  getHomeOffset,
   measureBlock,
 } from './P5Home/utils';
 
@@ -17,77 +15,112 @@ type P5HomeProps = {
   onNavigate: (id: HomeItemId) => void;
 };
 
-type HomeBlockSpec = Omit<HomeTextBlock, 'x' | 'y' | 'width' | 'height' | 'lineGap'>;
+type HomeBlockMetrics = Pick<HomeTextBlock, 'width' | 'height' | 'lineGap'>;
+
+type HomeBlockSpec = {
+  id: HomeTextBlock['id'];
+  lines: string[];
+  interactive: boolean;
+  targets?: [HomeItemId, HomeItemId];
+  style: HomeTextBlock['style'];
+  fontSize: (width: number) => number;
+  lineGap: (fontSize: number) => number;
+  layout: (args: {
+    width: number;
+    height: number;
+    metrics: HomeBlockMetrics;
+    previous: Partial<Record<HomeTextBlock['id'], HomeTextBlock>>;
+  }) => { x: number; y: number };
+};
 
 const HOME_BACKGROUND = '#111111';
-const TITLE_LINES = ['Max Pleaner'];
-const DESCRIPTION_LINES = ['', 'does', '  software', '  art', '  media', '  and music'];
-const DESCRIPTION_OFFSET_X = 20;
-const HOME_ITEMS: Array<{ id: HomeItemId; label: string }> = [
-  { id: 'portfolio', label: 'portfolio' },
-  { id: 'services', label: 'services' },
+const HOME_BLOCKS: HomeBlockSpec[] = [
+  {
+    id: 'title',
+    lines: ['Max Pleaner'],
+    interactive: false,
+    style: { fontSize: 0, align: 'center', fill: '#f4f1ea', fontWeight: 900 },
+    fontSize: (width) => clamp(26, width * 0.05, 44),
+    lineGap: (fontSize) => fontSize * 0.15,
+    layout: (args) => ({
+      x: (args.width - args.metrics.width) / 2,
+      y: clamp(56, args.height * 0.18, args.height * 0.32),
+    }),
+  },
+  {
+    id: 'description',
+    lines: ['', 'does', '  software', '  art', '  media', '  and music'],
+    interactive: false,
+    style: { fontSize: 0, align: 'center', fill: '#f4f1ea', fontWeight: 700 },
+    fontSize: (width) => clamp(18, width * 0.035, 24),
+    lineGap: (fontSize) => fontSize * 0.28,
+    layout: (args) => {
+      const title = args.previous.title;
+
+      if (!title) {
+        return { x: (args.width - args.metrics.width) / 2, y: 0 };
+      }
+
+      return {
+        x: (args.width - args.metrics.width) / 2 + 20,
+        y: title.y + title.height + clamp(12, args.height * 0.02, 20),
+      };
+    },
+  },
+  {
+    id: 'links',
+    lines: ['portfolio', 'services'],
+    interactive: true,
+    targets: ['portfolio', 'services'],
+    style: { fontSize: 0, align: 'left', fill: '#20c05c', hoverFill: '#39e476', fontWeight: 700 },
+    fontSize: (width) => clamp(18, width * 0.035, 24),
+    lineGap: (fontSize) => fontSize * 0.45,
+    layout: (args) => {
+      const description = args.previous.description;
+      const offset = args.width <= 640 ? clamp(42, args.width * 0.14, 72) : clamp(72, args.width * 0.095, 140);
+
+      if (!description) {
+        return { x: (args.width - args.metrics.width) / 2 - offset, y: 0 };
+      }
+
+      return {
+        x: (args.width - args.metrics.width) / 2 - offset,
+        y: description.y + description.height + clamp(44, args.height * 0.09, 88),
+      };
+    },
+  },
 ];
 
-function getHomeBlocks(p: p5 | p5.Graphics, width: number, height: number): HomeTextBlock[] {
-  const titleFontSize = getBlockFontSize('title', width);
-  const descriptionFontSize = getBlockFontSize('description', width);
-  const linksFontSize = getBlockFontSize('links', width);
-
-  const titleBlock: HomeBlockSpec = {
-    id: 'title',
-    lines: TITLE_LINES,
-    interactive: false,
-    style: { fontSize: titleFontSize, align: 'center', fill: '#f4f1ea', fontWeight: 900 },
-  };
-  const descriptionBlock: HomeBlockSpec = {
-    id: 'description',
-    lines: DESCRIPTION_LINES,
-    interactive: false,
-    style: { fontSize: descriptionFontSize, align: 'center', fill: '#f4f1ea', fontWeight: 700 },
-  };
-  const linksBlock: HomeBlockSpec = {
-    id: 'links',
-    lines: HOME_ITEMS.map((item) => item.label),
-    interactive: true,
-    targets: [HOME_ITEMS[0].id, HOME_ITEMS[1].id],
-    style: { fontSize: linksFontSize, align: 'left', fill: '#20c05c', hoverFill: '#39e476', fontWeight: 700 },
-  };
-
-  const titleMetrics = measureBlock(p, titleBlock, titleFontSize);
-  const descriptionMetrics = measureBlock(p, descriptionBlock, descriptionFontSize);
-  const linksMetrics = measureBlock(p, linksBlock, linksFontSize);
-
-  const titleTop = clamp(56, height * 0.18, height * 0.32);
-  const descriptionTop = titleTop + titleMetrics.height + clamp(12, height * 0.02, 20);
-  const linksTop = descriptionTop + descriptionMetrics.height + clamp(44, height * 0.09, 88);
-
-  return [
-    {
-      ...titleBlock,
-      ...titleMetrics,
-      x: (width - titleMetrics.width) / 2,
-      y: titleTop,
-    },
-    {
-      ...descriptionBlock,
-      ...descriptionMetrics,
-      x: (width - descriptionMetrics.width) / 2 + DESCRIPTION_OFFSET_X,
-      y: descriptionTop,
-    },
-    {
-      ...linksBlock,
-      ...linksMetrics,
-      x: (width - linksMetrics.width) / 2 - getHomeOffset(width),
-      y: linksTop,
-    },
-  ];
-}
-
 function getHomeContent(p: p5, width: number, height: number): HomeTextContent {
+  const previous: Partial<Record<HomeTextBlock['id'], HomeTextBlock>> = {};
+
   return {
     background: HOME_BACKGROUND,
     fontFamily: getHomeFontStack(),
-    blocks: getHomeBlocks(p, width, height),
+    blocks: HOME_BLOCKS.map((block) => {
+      const fontSize = block.fontSize(width);
+      const lineGap = block.lineGap(fontSize);
+      const baseMetrics = measureBlock(p, block.lines, fontSize);
+      const metrics = {
+        width: baseMetrics.width,
+        height: baseMetrics.height + lineGap * Math.max(0, block.lines.length - 1),
+        lineGap,
+      };
+      const position = block.layout({ width, height, metrics, previous });
+      const layout = {
+        ...block,
+        ...metrics,
+        ...position,
+        style: {
+          ...block.style,
+          fontSize,
+        },
+      } satisfies HomeTextBlock;
+
+      previous[block.id] = layout;
+
+      return layout;
+    }),
   };
 }
 
