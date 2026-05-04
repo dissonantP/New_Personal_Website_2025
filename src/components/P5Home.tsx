@@ -55,40 +55,44 @@ type SdfField = {
 const title = 'Max Pleaner';
 const fontStack =
   'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
-const defaultSdfConfig: SdfConfig = {
-  resolutionScale: 1,
-  includeCarets: false,
-  passes: [
-    {
-      enabled: true,
-      spread: 820,
-      seedThreshold: 150,
-      showLines: true,
-      thresholdLines: true,
-      invert: false,
-      lineModulo: 48,
-      lineThickness: 0.11,
-      cutoffMin: 0,
-      cutoffMax: 1,
-      noiseAmplitude: 0,
-      noiseFrequency: 0.012,
-    },
-    {
-      enabled: false,
-      spread: 220,
-      seedThreshold: 24,
-      showLines: false,
-      thresholdLines: false,
-      invert: false,
-      lineModulo: 24,
-      lineThickness: 0.12,
-      cutoffMin: 0,
-      cutoffMax: 1,
-      noiseAmplitude: 0,
-      noiseFrequency: 0.012,
-    },
-  ],
-};
+const sdfPresets = {
+  noisyLineField: {
+    resolutionScale: 1,
+    includeCarets: true,
+    passes: [
+      {
+        enabled: true,
+        spread: 820,
+        seedThreshold: 150,
+        showLines: true,
+        thresholdLines: true,
+        invert: false,
+        lineModulo: 48,
+        lineThickness: 0.11,
+        cutoffMin: 0.06,
+        cutoffMax: 1,
+        noiseAmplitude: 30,
+        noiseFrequency: 0.035,
+      },
+      {
+        enabled: false,
+        spread: 220,
+        seedThreshold: 24,
+        showLines: false,
+        thresholdLines: false,
+        invert: false,
+        lineModulo: 24,
+        lineThickness: 0.12,
+        cutoffMin: 0,
+        cutoffMax: 1,
+        noiseAmplitude: 0,
+        noiseFrequency: 0.012,
+      },
+    ],
+  },
+} satisfies Record<string, SdfConfig>;
+
+const defaultSdfConfig: SdfConfig = sdfPresets.noisyLineField;
 
 function clamp(min: number, value: number, max: number) {
   return Math.min(Math.max(value, min), max);
