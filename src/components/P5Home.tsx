@@ -33,6 +33,8 @@ type SdfPassConfig = {
   invert: boolean;
   lineModulo: number;
   lineThickness: number;
+  cutoffMin: number;
+  cutoffMax: number;
   noiseAmplitude: number;
   noiseFrequency: number;
 };
@@ -66,6 +68,8 @@ const defaultSdfConfig: SdfConfig = {
       invert: false,
       lineModulo: 48,
       lineThickness: 0.11,
+      cutoffMin: 0,
+      cutoffMax: 1,
       noiseAmplitude: 0,
       noiseFrequency: 0.012,
     },
@@ -78,6 +82,8 @@ const defaultSdfConfig: SdfConfig = {
       invert: false,
       lineModulo: 24,
       lineThickness: 0.12,
+      cutoffMin: 0,
+      cutoffMax: 1,
       noiseAmplitude: 0,
       noiseFrequency: 0.012,
     },
@@ -281,7 +287,10 @@ function runSdfLinePass(
       const brightness = sampleFalloff(t);
       const phase = (t * config.lineModulo) % 1;
       const lineDistance = Math.min(phase, 1 - phase);
-      const thresholdBand = rawT < 1 && lineDistance <= config.lineThickness ? 1 : 0;
+      const cutoffMin = Math.min(config.cutoffMin, config.cutoffMax);
+      const cutoffMax = Math.max(config.cutoffMin, config.cutoffMax);
+      const withinLineCutoff = rawT < 1 && t >= cutoffMin && t <= cutoffMax;
+      const thresholdBand = withinLineCutoff && lineDistance <= config.lineThickness ? 1 : 0;
       const lineMask = config.invert ? 1 - thresholdBand : thresholdBand;
       const thresholdLineBackground = config.invert ? 1 : 0;
       const line = config.thresholdLines
@@ -651,6 +660,50 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             step="any"
             type="number"
             value={pass.lineThickness}
+          />
+        </label>
+        <label>
+          cutoff min
+          <input
+            max="1"
+            min="0"
+            onChange={(event) => updatePass(index, { cutoffMin: Number(event.target.value) })}
+            step="0.01"
+            type="range"
+            value={pass.cutoffMin}
+          />
+          <input
+            className="sdf-dev-number"
+            onChange={(event) =>
+              updateNumericInput(event.target.value, (value) =>
+                updatePass(index, { cutoffMin: value }),
+              )
+            }
+            step="any"
+            type="number"
+            value={pass.cutoffMin}
+          />
+        </label>
+        <label>
+          cutoff max
+          <input
+            max="1"
+            min="0"
+            onChange={(event) => updatePass(index, { cutoffMax: Number(event.target.value) })}
+            step="0.01"
+            type="range"
+            value={pass.cutoffMax}
+          />
+          <input
+            className="sdf-dev-number"
+            onChange={(event) =>
+              updateNumericInput(event.target.value, (value) =>
+                updatePass(index, { cutoffMax: value }),
+              )
+            }
+            step="any"
+            type="number"
+            value={pass.cutoffMax}
           />
         </label>
         <label>
