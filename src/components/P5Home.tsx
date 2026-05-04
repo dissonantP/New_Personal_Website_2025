@@ -14,7 +14,7 @@ type P5HomeProps = {
 };
 
 type RowLayout = {
-  id: 'title' | 'description' | HomeItemId;
+  id: 'title' | HomeItemId;
   label: string;
   lines: string[];
   x: number;
@@ -140,11 +140,7 @@ function getRowFontSize(rowId: RowLayout['id'], width: number) {
     return clamp(26, width * 0.05, 44);
   }
 
-  if (rowId === 'description') {
-    return clamp(18, width * 0.035, 30);
-  }
-
-  return clamp(24, width * 0.045, 40);
+  return clamp(18, width * 0.035, 30);
 }
 
 function getLayout(
@@ -158,19 +154,23 @@ function getLayout(
   const rowGap = clamp(42, height * 0.075, 82);
   const homeOffset = getHomeOffset(width);
   const rows = [
-    { id: 'title' as const, label: title, lines: [title] },
-    { id: 'description' as const, label: descriptionLines.join('\n'), lines: descriptionLines },
+    { id: 'title' as const, label: title, lines: [title, ...descriptionLines] },
     ...items.map((item) => ({ ...item, lines: [item.label] })),
   ];
   const layoutRows = rows.map((row) => {
     const fontSize = getRowFontSize(row.id, width);
-    const lineHeight = fontSize * (row.id === 'description' ? 1.15 : 0.95);
-    const rowHeight = lineHeight * row.lines.length + paddingY * 2;
+    const rowHeight =
+      row.id === 'title'
+        ? fontSize * 0.95 + descriptionLines.length * (fontSize * 0.035 * 1.35) + paddingY * 2
+        : fontSize * 0.95 + paddingY * 2;
 
     p.textFont(fontStack);
     p.textSize(fontSize);
 
-    const textWidth = Math.max(...row.lines.map((line) => p.textWidth(line)));
+    const textWidth =
+      row.id === 'title'
+        ? Math.max(p.textWidth(title), ...descriptionLines.map((line) => p.textWidth(line)))
+        : Math.max(...row.lines.map((line) => p.textWidth(line)));
     const rowWidth = textWidth + paddingX * 2;
 
     return {
@@ -186,7 +186,7 @@ function getLayout(
   let y = startY;
 
   return layoutRows.map((row, index) => {
-    const interactive = row.id !== 'title' && row.id !== 'description';
+    const interactive = row.id !== 'title';
     const centeredX = (width - row.rowWidth) / 2;
     const x =
       row.id === 'title'
@@ -578,21 +578,31 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           const isHovered = row.id === hoveredRowId;
           const isLink = row.interactive;
           const labelX = row.x + paddingX;
-          const lineHeight = fontSize * (row.id === 'description' ? 1.15 : 0.95);
-          const textTop = row.y + (row.height - lineHeight * row.lines.length) / 2;
+          const titleLineHeight = fontSize * 0.95;
+          const bodyFontSize = getRowFontSize('services', layoutWidth);
+          const bodyLineHeight = bodyFontSize * 1.15;
 
           surface.fill(
             useMask ? '#ffffff' : isHovered ? '#39e476' : isLink ? '#20c05c' : '#f4f1ea',
           );
           surface.textStyle('bold');
-          surface.textSize(fontSize);
 
-          row.lines.forEach((line, index) => {
-            surface.text(line, labelX, textTop + lineHeight * index + lineHeight / 2);
-          });
+          if (row.id === 'title') {
+            const titleTop = row.y + (row.height - (titleLineHeight + bodyLineHeight * descriptionLines.length)) / 2;
+            surface.textSize(fontSize);
+            surface.text(title, labelX, titleTop + titleLineHeight / 2);
+            surface.textSize(bodyFontSize);
+            descriptionLines.forEach((line, index) => {
+              surface.text(line, labelX, titleTop + titleLineHeight + bodyLineHeight * index + bodyLineHeight / 2);
+            });
+          } else {
+            const textTop = row.y + (row.height - titleLineHeight) / 2;
+            surface.textSize(fontSize);
+            surface.text(row.label, labelX, textTop + titleLineHeight / 2);
+          }
 
           if (isLink) {
-            const underlineY = textTop + lineHeight + fontSize * 0.13;
+            const underlineY = row.y + row.height / 2 + fontSize * 0.4;
             const textWidth = surface.textWidth(row.label);
             surface.stroke(useMask ? '#ffffff' : isHovered ? '#39e476' : '#20c05c');
             surface.strokeWeight(Math.max(1, fontSize * 0.055));
