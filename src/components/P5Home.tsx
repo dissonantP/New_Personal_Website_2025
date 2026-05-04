@@ -41,6 +41,7 @@ type SdfPassConfig = {
   pulseSpeed: number;
   pulseInterval: number;
   pulseColor: string;
+  pulsePingPong: boolean;
 };
 
 type SdfConfig = {
@@ -88,6 +89,7 @@ const sdfPresets = {
         pulseSpeed: 0.2,
         pulseInterval: 3,
         pulseColor: '#000000',
+        pulsePingPong: false,
       },
       {
         enabled: false,
@@ -106,6 +108,7 @@ const sdfPresets = {
         pulseSpeed: 0,
         pulseInterval: 2,
         pulseColor: '#000000',
+        pulsePingPong: false,
       },
     ],
   },
@@ -186,7 +189,10 @@ function samplePulse(t: number, elapsedSeconds: number, config: SdfPassConfig) {
     return 0;
   }
 
-  const pulseCenter = (elapsedSeconds % config.pulseInterval) * config.pulseSpeed;
+  const pulseProgress = (elapsedSeconds % config.pulseInterval) * config.pulseSpeed;
+  const pulseCenter = config.pulsePingPong
+    ? 1 - Math.abs(1 - (pulseProgress % 2))
+    : pulseProgress;
 
   if (pulseCenter > 1 + config.pulseWidth) {
     return 0;
@@ -965,6 +971,14 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             className="sdf-dev-color-value"
             readOnly
             value={pass.pulseColor}
+          />
+        </label>
+        <label className="sdf-dev-toggle">
+          pingpong
+          <input
+            checked={pass.pulsePingPong}
+            onChange={(event) => updatePass(index, { pulsePingPong: event.target.checked })}
+            type="checkbox"
           />
         </label>
       </div>
