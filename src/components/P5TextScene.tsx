@@ -14,14 +14,36 @@ export function P5TextScene<TContent>({ getContent, createSketch }: P5TextSceneP
   const sketchRef = useRef<p5 | null>(null);
 
   useEffect(() => {
-    const sketch = createSketch({
-      getHostElement: () => hostRef.current,
-      getContent,
-    });
+    let initTimer: number | null = null;
+    let cancelled = false;
 
-    sketchRef.current = new p5(sketch);
+    function startSketch() {
+      if (cancelled || sketchRef.current) {
+        return;
+      }
+
+      const host = hostRef.current;
+
+      if (!host || host.clientWidth <= 0 || host.clientHeight <= 0) {
+        initTimer = window.setTimeout(startSketch, 16);
+        return;
+      }
+
+      const sketch = createSketch({
+        getHostElement: () => hostRef.current,
+        getContent,
+      });
+
+      sketchRef.current = new p5(sketch);
+    }
+
+    startSketch();
 
     return () => {
+      cancelled = true;
+      if (initTimer) {
+        window.clearTimeout(initTimer);
+      }
       sketchRef.current?.remove();
       sketchRef.current = null;
     };

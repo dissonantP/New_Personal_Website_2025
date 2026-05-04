@@ -24,7 +24,14 @@ export function buildTextSceneContent<TTarget extends string>(args: {
         height: baseMetrics.height + lineGap * Math.max(0, block.lines.length - 1),
         lineGap,
       };
-      const position = block.layout({ width: args.width, height: args.height, metrics, previous });
+      const position = block.layout({
+        width: args.width,
+        height: args.height,
+        screenCenterX: args.width / 2,
+        screenCenterY: args.height / 2,
+        metrics,
+        previous,
+      });
       const layout = {
         ...block,
         ...metrics,

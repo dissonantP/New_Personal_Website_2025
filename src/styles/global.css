@@ -28,24 +28,9 @@ a {
 .app-shell {
   display: grid;
   isolation: isolate;
-  position: relative;
   min-height: 100vh;
   padding: 0;
   background: #000000;
-}
-
-.screen-frame-overlay {
-  position: fixed;
-  inset: 50% auto auto 50%;
-  width: min(95vw, 1000px);
-  height: min(95vh, 1000px);
-  transform: translate(-50%, -50%);
-  background: transparent;
-  border: 1px solid #009900;
-  box-sizing: border-box;
-  box-shadow: 0 0 0 9999px #000000;
-  pointer-events: none;
-  z-index: 5;
 }
 
 .p5-backdrop {

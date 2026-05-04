@@ -49,11 +49,7 @@ export function App() {
           isFading ? 'intro-fading' : ''
         }`}
       >
-        {section === 'home' ? (
-          <P5Home onNavigate={navigate} />
-        ) : (
-          renderSection()
-        )}
+        {section === 'home' ? <P5Home onNavigate={navigate} /> : renderSection()}
       </Box>
     </main>
   );

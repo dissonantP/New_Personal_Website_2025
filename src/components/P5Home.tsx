@@ -7,28 +7,13 @@ import { buildTextSceneContent } from './P5TextScene/content';
 import type { TextSceneBlockSpec } from './P5TextScene/types';
 import type { HomeItemId } from './P5Home/types';
 import { createHomeEffects } from './P5Home/effects';
-import { clamp, getHomeOffset } from './P5Home/utils';
-
-const HOME_OFFSET_CONFIG = {
-  // Switch to the mobile offset curve at or below this width.
-  mobileWidth: 640,
-  // Minimum horizontal offset on small screens.
-  mobileMin: 42,
-  // How aggressively the offset grows with width on small screens.
-  mobileFactor: 0.14,
-  // Maximum horizontal offset on small screens.
-  mobileMax: 72,
-  // Minimum horizontal offset on larger screens.
-  desktopMin: 72,
-  // How aggressively the offset grows with width on larger screens.
-  desktopFactor: 0.095,
-  // Maximum horizontal offset on larger screens.
-  desktopMax: 140,
-};
+import { clamp } from './P5Home/utils';
 
 type P5HomeProps = {
   onNavigate: (id: HomeItemId) => void;
 };
+
+const yOffset = 20
 
 const HOME_BLOCKS: TextSceneBlockSpec<HomeItemId>[] = [
   {
@@ -38,51 +23,67 @@ const HOME_BLOCKS: TextSceneBlockSpec<HomeItemId>[] = [
     style: { fontSize: 0, align: 'center', fill: '#f4f1ea', fontWeight: 900 },
     fontSize: (width) => clamp(26, width * 0.05, 44),
     lineGap: (fontSize) => fontSize * 0.15,
-    layout: ({ width, height, metrics }) => ({
-      x: width / 2 - (metrics.width / 3.2),
-      y: height / 4,
+    layout: ({ screenCenterX, screenCenterY }) => ({
+      x: screenCenterX + 10,
+      y: screenCenterY + yOffset - 300,
     }),
   },
   {
     id: 'description',
-    lines: ['', 'does', '  software', '  art', '  media', '  and music'],
+    lines: ['software', 'art', 'media', 'music'],
     interactive: false,
     style: { fontSize: 0, align: 'left', fill: '#f4f1ea', fontWeight: 700 },
     fontSize: (width) => clamp(18, width * 0.035, 24),
     lineGap: (fontSize) => fontSize * 0.28,
-    layout: ({ width, metrics, previous }) => {
+    layout: ({ screenCenterX, previous }) => {
       const title = previous.title;
-
-      if (!title) {
-        return { x: (width - metrics.width) / 2, y: 0 };
-      }
+      const titleY = title?.y ?? 0;
 
       return {
-        x: width / 2 - (title.width / 1.5),
-        y: title.y + metrics.height * 1.6,
+        x: screenCenterX - 100,
+        y: titleY + 170,
       };
     },
   },
   {
-    id: 'links',
-    lines: ['portfolio', 'services'],
+    id: 'portfolio',
+    lines: ['portfolio'],
     interactive: true,
-    targets: ['portfolio', 'services'],
+    targets: ['portfolio'],
     style: { fontSize: 0, align: 'left', fill: '#20c05c', hoverFill: '#39e476', fontWeight: 700 },
     fontSize: (width) => clamp(18, width * 0.035, 24),
     lineGap: (fontSize) => fontSize * 0.45,
-    layout: ({ width, metrics, previous }) => {
-      const title = previous.title;
+    layout: ({ screenCenterX, previous }) => {
       const description = previous.description;
-      const offset = getHomeOffset(width, HOME_OFFSET_CONFIG);
 
-      if (!title || !description) {
-        return { x: (width - metrics.width) / 2 - offset, y: 0 };
+      if (!description) {
+        return { x: screenCenterX + 10, y: 0 };
       }
 
       return {
-        x: width / 2 + (title.width * 0.1),
-        y: description.y + metrics.height * 7,
+        x: screenCenterX + 10,
+        y: description.y + 230,
+      };
+    },
+  },
+  {
+    id: 'services',
+    lines: ['services'],
+    interactive: true,
+    targets: ['services'],
+    style: { fontSize: 0, align: 'left', fill: '#20c05c', hoverFill: '#39e476', fontWeight: 700 },
+    fontSize: (width) => clamp(18, width * 0.035, 24),
+    lineGap: (fontSize) => fontSize * 0.45,
+    layout: ({ screenCenterX, previous }) => {
+      const portfolio = previous.portfolio;
+
+      if (!portfolio) {
+        return { x: screenCenterX - 100, y: 0 };
+      }
+
+      return {
+        x: screenCenterX - 100,
+        y: portfolio.y + 150,
       };
     },
   },

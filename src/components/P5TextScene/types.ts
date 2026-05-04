@@ -5,7 +5,7 @@ export type TextSceneBlockStyle = {
   align: 'left' | 'center';
   fill: string;
   hoverFill?: string;
-  fontWeight?: 400 | 700 | 900;
+  fontWeight?: 400 | 600 | 700 | 900;
 };
 
 export type TextSceneBlock<TTarget extends string = string> = {
@@ -17,7 +17,7 @@ export type TextSceneBlock<TTarget extends string = string> = {
   height: number;
   lineGap: number;
   interactive: boolean;
-  targets?: [TTarget, TTarget];
+  targets?: TTarget[];
   style: TextSceneBlockStyle;
 };
 
@@ -25,13 +25,15 @@ export type TextSceneBlockSpec<TTarget extends string = string> = {
   id: string;
   lines: string[];
   interactive: boolean;
-  targets?: [TTarget, TTarget];
+  targets?: TTarget[];
   style: TextSceneBlockStyle;
   fontSize: (width: number) => number;
   lineGap: (fontSize: number) => number;
   layout: (args: {
     width: number;
     height: number;
+    screenCenterX: number;
+    screenCenterY: number;
     metrics: Pick<TextSceneBlock<TTarget>, 'width' | 'height' | 'lineGap'>;
     previous: Partial<Record<string, TextSceneBlock<TTarget>>>;
   }) => { x: number; y: number };
