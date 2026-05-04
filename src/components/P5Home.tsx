@@ -143,7 +143,7 @@ function smoothstep(edge0: number, edge1: number, value: number) {
 }
 
 function sampleFalloff(value: number) {
-  return smoothstep(0, 1, value);
+  return 1 - smoothstep(0, 1, value);
 }
 
 function distanceTransform1d(input: Float32Array, output: Float32Array, length: number) {
