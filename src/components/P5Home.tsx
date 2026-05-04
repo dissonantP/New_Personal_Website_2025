@@ -5,6 +5,13 @@ import { P5TextScene } from './P5TextScene';
 import { createTextSceneSketch } from './P5TextScene/sketch';
 import type { HomeItemId, HomeTextBlock, HomeTextContent } from './P5Home/types';
 import { createHomeEffects } from './P5Home/effects';
+import {
+  clamp,
+  getBlockFontSize,
+  getHomeFontStack,
+  getHomeOffset,
+  measureBlock,
+} from './P5Home/utils';
 
 type P5HomeProps = {
   onNavigate: (id: HomeItemId) => void;
@@ -13,8 +20,6 @@ type P5HomeProps = {
 type HomeBlockSpec = Omit<HomeTextBlock, 'x' | 'y' | 'width' | 'height' | 'lineGap'>;
 
 const HOME_BACKGROUND = '#111111';
-const FONT_STACK =
-  'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
 const TITLE_LINES = ['Max Pleaner'];
 const DESCRIPTION_LINES = ['', 'does', '  software', '  art', '  media', '  and music'];
 const DESCRIPTION_OFFSET_X = 20;
@@ -22,58 +27,6 @@ const HOME_ITEMS: Array<{ id: HomeItemId; label: string }> = [
   { id: 'portfolio', label: 'portfolio' },
   { id: 'services', label: 'services' },
 ];
-
-function clamp(min: number, value: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
-
-function getHomeOffset(width: number) {
-  if (width <= 640) {
-    return clamp(42, width * 0.14, 72);
-  }
-
-  return clamp(72, width * 0.095, 140);
-}
-
-function getBlockFontSize(blockId: HomeTextBlock['id'], width: number) {
-  if (blockId === 'title') {
-    return clamp(26, width * 0.05, 44);
-  }
-
-  return clamp(18, width * 0.035, 24);
-}
-
-function getBlockLineGap(blockId: HomeTextBlock['id'], fontSize: number) {
-  if (blockId === 'title') {
-    return fontSize * 0.15;
-  }
-
-  if (blockId === 'description') {
-    return fontSize * 0.28;
-  }
-
-  return fontSize * 0.45;
-}
-
-function measureBlock(
-  p: p5 | p5.Graphics,
-  block: HomeBlockSpec,
-  fontSize: number,
-): Pick<HomeTextBlock, 'width' | 'height' | 'lineGap'> {
-  p.textFont(FONT_STACK);
-  p.textSize(fontSize);
-
-  const lineGap = getBlockLineGap(block.id, fontSize);
-  const lineHeight = fontSize * 0.95;
-  const width = Math.max(...block.lines.map((line) => p.textWidth(line)));
-  const height = lineHeight * block.lines.length + lineGap * Math.max(0, block.lines.length - 1);
-
-  return {
-    width,
-    height,
-    lineGap,
-  };
-}
 
 function getHomeBlocks(p: p5 | p5.Graphics, width: number, height: number): HomeTextBlock[] {
   const titleFontSize = getBlockFontSize('title', width);
@@ -133,7 +86,7 @@ function getHomeBlocks(p: p5 | p5.Graphics, width: number, height: number): Home
 function getHomeContent(p: p5, width: number, height: number): HomeTextContent {
   return {
     background: HOME_BACKGROUND,
-    fontFamily: FONT_STACK,
+    fontFamily: getHomeFontStack(),
     blocks: getHomeBlocks(p, width, height),
   };
 }
