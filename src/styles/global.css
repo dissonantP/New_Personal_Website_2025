@@ -74,7 +74,7 @@ a {
 
 .sdf-dev-panel label {
   display: grid;
-  grid-template-columns: 82px 1fr 38px;
+  grid-template-columns: 82px 1fr 58px;
   align-items: center;
   gap: 8px;
 }
@@ -84,7 +84,13 @@ a {
   accent-color: #20c05c;
 }
 
-.sdf-dev-panel span {
+.sdf-dev-number {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgb(244 241 234 / 22%);
+  background: rgb(0 0 0 / 32%);
+  color: #f4f1ea;
+  font: inherit;
   text-align: right;
 }
 

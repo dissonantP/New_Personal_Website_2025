@@ -33,6 +33,8 @@ type SdfPassConfig = {
   invert: boolean;
   lineModulo: number;
   lineThickness: number;
+  noiseAmplitude: number;
+  noiseFrequency: number;
 };
 
 type SdfConfig = {
@@ -64,6 +66,8 @@ const defaultSdfConfig: SdfConfig = {
       invert: false,
       lineModulo: 48,
       lineThickness: 0.11,
+      noiseAmplitude: 0,
+      noiseFrequency: 0.012,
     },
     {
       enabled: false,
@@ -74,6 +78,8 @@ const defaultSdfConfig: SdfConfig = {
       invert: false,
       lineModulo: 24,
       lineThickness: 0.12,
+      noiseAmplitude: 0,
+      noiseFrequency: 0.012,
     },
   ],
 };
@@ -264,7 +270,13 @@ function runSdfLinePass(
       const fieldIndex = y * field.width + x;
       const pixelIndex = fieldIndex * 4;
       const distance = Math.sqrt(field.distances[fieldIndex]);
-      const rawT = distance / scaledSpread;
+      const noise =
+        config.noiseAmplitude === 0
+          ? 0
+          : (p.noise(x * config.noiseFrequency, y * config.noiseFrequency) - 0.5) *
+            config.noiseAmplitude *
+            field.sourceScale;
+      const rawT = Math.max(0, distance + noise) / scaledSpread;
       const t = clamp(0, rawT, 1);
       const brightness = sampleFalloff(t);
       const phase = (t * config.lineModulo) % 1;
@@ -503,6 +515,18 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
     });
   }
 
+  function updateNumericInput(value: string, apply: (value: number) => void) {
+    if (value.trim() === '') {
+      return;
+    }
+
+    const nextValue = Number(value);
+
+    if (Number.isFinite(nextValue)) {
+      apply(nextValue);
+    }
+  }
+
   function renderPassControls(index: 0 | 1, label: string) {
     const pass = config.passes[index];
 
@@ -529,7 +553,15 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             type="range"
             value={pass.spread}
           />
-          <span>{pass.spread}</span>
+          <input
+            className="sdf-dev-number"
+            onChange={(event) =>
+              updateNumericInput(event.target.value, (value) => updatePass(index, { spread: value }))
+            }
+            step="any"
+            type="number"
+            value={pass.spread}
+          />
         </label>
         <label>
           threshold
@@ -541,7 +573,17 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             type="range"
             value={pass.seedThreshold}
           />
-          <span>{pass.seedThreshold}</span>
+          <input
+            className="sdf-dev-number"
+            onChange={(event) =>
+              updateNumericInput(event.target.value, (value) =>
+                updatePass(index, { seedThreshold: value }),
+              )
+            }
+            step="any"
+            type="number"
+            value={pass.seedThreshold}
+          />
         </label>
         <label className="sdf-dev-toggle">
           lines
@@ -577,7 +619,17 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             type="range"
             value={pass.lineModulo}
           />
-          <span>{pass.lineModulo}</span>
+          <input
+            className="sdf-dev-number"
+            onChange={(event) =>
+              updateNumericInput(event.target.value, (value) =>
+                updatePass(index, { lineModulo: value }),
+              )
+            }
+            step="any"
+            type="number"
+            value={pass.lineModulo}
+          />
         </label>
         <label>
           thickness
@@ -589,7 +641,61 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             type="range"
             value={pass.lineThickness}
           />
-          <span>{pass.lineThickness.toFixed(2)}</span>
+          <input
+            className="sdf-dev-number"
+            onChange={(event) =>
+              updateNumericInput(event.target.value, (value) =>
+                updatePass(index, { lineThickness: value }),
+              )
+            }
+            step="any"
+            type="number"
+            value={pass.lineThickness}
+          />
+        </label>
+        <label>
+          noise amp
+          <input
+            max="400"
+            min="0"
+            onChange={(event) => updatePass(index, { noiseAmplitude: Number(event.target.value) })}
+            step="5"
+            type="range"
+            value={pass.noiseAmplitude}
+          />
+          <input
+            className="sdf-dev-number"
+            onChange={(event) =>
+              updateNumericInput(event.target.value, (value) =>
+                updatePass(index, { noiseAmplitude: value }),
+              )
+            }
+            step="any"
+            type="number"
+            value={pass.noiseAmplitude}
+          />
+        </label>
+        <label>
+          noise freq
+          <input
+            max="0.08"
+            min="0.001"
+            onChange={(event) => updatePass(index, { noiseFrequency: Number(event.target.value) })}
+            step="0.001"
+            type="range"
+            value={pass.noiseFrequency}
+          />
+          <input
+            className="sdf-dev-number"
+            onChange={(event) =>
+              updateNumericInput(event.target.value, (value) =>
+                updatePass(index, { noiseFrequency: value }),
+              )
+            }
+            step="any"
+            type="number"
+            value={pass.noiseFrequency}
+          />
         </label>
       </div>
     );
@@ -608,7 +714,17 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             type="range"
             value={config.resolutionScale}
           />
-          <span>{config.resolutionScale.toFixed(2)}</span>
+          <input
+            className="sdf-dev-number"
+            onChange={(event) =>
+              updateNumericInput(event.target.value, (value) =>
+                updateConfig({ resolutionScale: value }),
+              )
+            }
+            step="any"
+            type="number"
+            value={config.resolutionScale}
+          />
         </label>
         <label className="sdf-dev-toggle">
           carets
