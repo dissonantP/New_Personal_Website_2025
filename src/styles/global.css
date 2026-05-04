@@ -28,8 +28,24 @@ a {
 .app-shell {
   display: grid;
   isolation: isolate;
+  position: relative;
   min-height: 100vh;
   padding: 0;
+  background: #000000;
+}
+
+.screen-frame-overlay {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  width: min(95vw, 1000px);
+  height: min(95vh, 1000px);
+  transform: translate(-50%, -50%);
+  background: transparent;
+  border: 1px solid #009900;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 9999px #000000;
+  pointer-events: none;
+  z-index: 5;
 }
 
 .p5-backdrop {
@@ -46,7 +62,8 @@ a {
 
 .p5-home {
   position: relative;
-  width: 100%;
+  width: 100vw;
+  height: 100vh;
   min-height: 100vh;
   overflow: hidden;
 }
@@ -153,6 +170,8 @@ a {
 
 .intro {
   display: grid;
+  position: relative;
+  z-index: 1;
   justify-items: stretch;
   text-align: left;
   opacity: 1;
@@ -174,6 +193,7 @@ a {
   grid-template-rows: none;
   justify-items: center;
   row-gap: clamp(28px, 5vh, 52px);
+  width: 100vw;
   min-height: 100vh;
   padding: 0;
 }
@@ -182,7 +202,9 @@ a {
   align-self: center;
   justify-self: center;
   width: min(calc(100% - 48px), 640px);
+  min-height: 100vh;
   padding: 32px 0;
+  overflow: auto;
 }
 
 .small-header {
