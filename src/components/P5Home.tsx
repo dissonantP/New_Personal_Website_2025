@@ -14,9 +14,10 @@ type P5HomeProps = {
 };
 
 type RowLayout = {
-  id: 'title' | HomeItemId;
+  id: 'title' | 'links';
   label: string;
   lines: string[];
+  targets?: [HomeItemId, HomeItemId];
   x: number;
   y: number;
   width: number;
@@ -66,7 +67,8 @@ type SdfPassRender = {
 };
 
 const title = 'Max Pleaner';
-const descriptionLines = ['does', '  software', '  art', '  media', '  and music'];
+const descriptionLines = ['', 'does', '  software', '  art', '  media', '  and music'];
+const descriptionOffsetX = 20;
 const fontStack =
   'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
 const sdfPresets = {
@@ -123,8 +125,8 @@ function clamp(min: number, value: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function isHomeItemId(id: RowLayout['id']): id is HomeItemId {
-  return id === 'portfolio' || id === 'services';
+function isHomeLinkRow(row: RowLayout | undefined): row is RowLayout & { id: 'links' } {
+  return Boolean(row && row.id === 'links');
 }
 
 function getHomeOffset(width: number) {
@@ -140,7 +142,7 @@ function getRowFontSize(rowId: RowLayout['id'], width: number) {
     return clamp(26, width * 0.05, 44);
   }
 
-  return clamp(18, width * 0.035, 30);
+  return clamp(18, width * 0.035, 24);
 }
 
 function getLayout(
@@ -155,14 +157,19 @@ function getLayout(
   const homeOffset = getHomeOffset(width);
   const rows = [
     { id: 'title' as const, label: title, lines: [title, ...descriptionLines] },
-    ...items.map((item) => ({ ...item, lines: [item.label] })),
+    {
+      id: 'links' as const,
+      label: items.map((item) => item.label).join('\n'),
+      lines: items.map((item) => item.label),
+      targets: [items[0].id, items[1].id] as [HomeItemId, HomeItemId],
+    },
   ];
   const layoutRows = rows.map((row) => {
     const fontSize = getRowFontSize(row.id, width);
     const rowHeight =
       row.id === 'title'
         ? fontSize * 0.95 + descriptionLines.length * (fontSize * 0.035 * 1.35) + paddingY * 2
-        : fontSize * 0.95 + paddingY * 2;
+        : fontSize * 0.95 + (fontSize * 0.95 + fontSize * 0.45) + paddingY * 2;
 
     p.textFont(fontStack);
     p.textSize(fontSize);
@@ -185,17 +192,15 @@ function getLayout(
   const startY = (height - totalHeight) / 2;
   let y = startY;
 
-  return layoutRows.map((row, index) => {
+  return layoutRows.map((row) => {
     const interactive = row.id !== 'title';
     const centeredX = (width - row.rowWidth) / 2;
-    const x =
-      row.id === 'title'
-        ? centeredX
-        : centeredX + homeOffset * (index % 2 === 0 ? 1 : -1);
+    const x = row.id === 'title' ? centeredX : centeredX - homeOffset;
     const layout = {
       id: row.id,
       label: row.label,
       lines: row.lines,
+      targets: row.targets,
       x,
       y,
       width: row.rowWidth,
@@ -532,7 +537,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
 
   useEffect(() => {
     const sketch = (p: p5) => {
-      let hoveredRowId: HomeItemId | null = null;
+      let hoveredRowId: RowLayout['id'] | null = null;
       let baseSdfImage: p5.Image | null = null;
       let sdfImage: p5.Image | null = null;
       let sdfPipeline: SdfPassRender[] = [];
@@ -552,7 +557,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
 
       function updateHover() {
         const row = getInteractiveRow();
-        const nextHoveredRowId = row && isHomeItemId(row.id) ? row.id : null;
+        const nextHoveredRowId = row ? row.id : null;
 
         if (nextHoveredRowId !== hoveredRowId) {
           hoveredRowId = nextHoveredRowId;
@@ -579,7 +584,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           const isLink = row.interactive;
           const labelX = row.x + paddingX;
           const titleLineHeight = fontSize * 0.95;
-          const bodyFontSize = getRowFontSize('services', layoutWidth);
+          const bodyFontSize = getRowFontSize('links', layoutWidth);
           const bodyLineHeight = bodyFontSize * 1.15;
 
           surface.fill(
@@ -593,21 +598,21 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             surface.text(title, labelX, titleTop + titleLineHeight / 2);
             surface.textSize(bodyFontSize);
             descriptionLines.forEach((line, index) => {
-              surface.text(line, labelX, titleTop + titleLineHeight + bodyLineHeight * index + bodyLineHeight / 2);
+              surface.text(
+                line,
+                labelX + descriptionOffsetX,
+                titleTop + titleLineHeight + bodyLineHeight * index + bodyLineHeight / 2,
+              );
             });
           } else {
-            const textTop = row.y + (row.height - titleLineHeight) / 2;
-            surface.textSize(fontSize);
-            surface.text(row.label, labelX, textTop + titleLineHeight / 2);
-          }
+            const linkLineHeight = fontSize * 0.95;
+            const linkGap = fontSize * 0.45;
+            const textTop = row.y + (row.height - (linkLineHeight * row.lines.length + linkGap)) / 2;
 
-          if (isLink) {
-            const underlineY = row.y + row.height / 2 + fontSize * 0.4;
-            const textWidth = surface.textWidth(row.label);
-            surface.stroke(useMask ? '#ffffff' : isHovered ? '#39e476' : '#20c05c');
-            surface.strokeWeight(Math.max(1, fontSize * 0.055));
-            surface.line(labelX, underlineY, labelX + textWidth, underlineY);
-            surface.noStroke();
+            surface.textSize(fontSize);
+            row.lines.forEach((line, index) => {
+              surface.text(line, labelX, textTop + (linkLineHeight + linkGap) * index + linkLineHeight / 2);
+            });
           }
         });
       }
@@ -704,8 +709,9 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
       p.mouseClicked = () => {
         const row = getInteractiveRow();
 
-        if (row && isHomeItemId(row.id)) {
-          navigateRef.current(row.id);
+        if (isHomeLinkRow(row) && row.targets) {
+          const splitPoint = row.y + row.height / 2;
+          navigateRef.current(p.mouseY < splitPoint ? row.targets[0] : row.targets[1]);
         }
       };
     };
