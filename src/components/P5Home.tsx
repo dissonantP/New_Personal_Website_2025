@@ -290,6 +290,27 @@ function runSdfLinePass(
   return image;
 }
 
+function compositeMax(base: p5.Image, overlay: p5.Image, p: p5) {
+  const image = p.createImage(base.width, base.height);
+
+  base.loadPixels();
+  overlay.loadPixels();
+  image.loadPixels();
+
+  for (let index = 0; index < image.pixels.length; index += 4) {
+    const value = Math.max(base.pixels[index], overlay.pixels[index]);
+
+    image.pixels[index] = value;
+    image.pixels[index + 1] = value;
+    image.pixels[index + 2] = value;
+    image.pixels[index + 3] = 255;
+  }
+
+  image.updatePixels();
+
+  return image;
+}
+
 function renderSdfPasses(
   source: p5.Graphics,
   p: p5,
@@ -303,7 +324,8 @@ function renderSdfPasses(
       return;
     }
 
-    image = runSdfLinePass(image ?? source, p, pass, sourceScale);
+    const nextImage = runSdfLinePass(image ?? source, p, pass, sourceScale);
+    image = image ? compositeMax(image, nextImage, p) : nextImage;
   });
 
   return image;
