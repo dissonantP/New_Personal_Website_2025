@@ -1,5 +1,5 @@
 import p5 from 'p5';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 type HomeItemId = 'software' | 'creative' | 'music';
 
@@ -20,7 +20,7 @@ type RowLayout = {
   y: number;
   width: number;
   height: number;
-  caret: boolean;
+  interactive: boolean;
   weight: number;
 };
 
@@ -47,7 +47,6 @@ type SdfPassConfig = {
 
 type SdfConfig = {
   resolutionScale: number;
-  includeCarets: boolean;
   passes: [SdfPassConfig, SdfPassConfig];
 };
 
@@ -71,7 +70,6 @@ const fontStack =
 const sdfPresets = {
   noisyLineField: {
     resolutionScale: 1,
-    includeCarets: true,
     passes: [
       {
         enabled: true,
@@ -151,10 +149,9 @@ function getLayout(
   p.textSize(fontSize);
 
   return rows.map((row, index) => {
-    const caret = row.id !== 'title';
+    const interactive = row.id !== 'title';
     const textWidth = p.textWidth(row.label);
-    const caretWidth = caret ? 10 + p.textWidth('>') * 0.72 : 0;
-    const rowWidth = textWidth + caretWidth + paddingX * 2;
+    const rowWidth = textWidth + paddingX * 2;
     const centeredX = (width - rowWidth) / 2;
     const x =
       row.id === 'title'
@@ -167,7 +164,7 @@ function getLayout(
       y: startY + index * (rowHeight + rowGap),
       width: rowWidth,
       height: rowHeight,
-      caret,
+      interactive,
       weight: row.id === 'title' ? 900 : 700,
     };
   });
@@ -487,7 +484,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
   const sketchRef = useRef<p5 | null>(null);
   const layoutRef = useRef<RowLayout[]>([]);
   const navigateRef = useRef(onNavigate);
-  const [config, setConfig] = useState<SdfConfig>(defaultSdfConfig);
+  const config = defaultSdfConfig;
 
   useEffect(() => {
     navigateRef.current = onNavigate;
@@ -504,7 +501,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
       function getInteractiveRow() {
         return layoutRef.current.find((row) => {
           return (
-            row.caret &&
+            row.interactive &&
             p.mouseX >= row.x &&
             p.mouseX <= row.x + row.width &&
             p.mouseY >= row.y &&
@@ -539,16 +536,22 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           const fontSize = clamp(26, layoutWidth * 0.05, 44);
           const paddingX = clamp(20, layoutWidth * 0.05, 56);
           const isHovered = row.id === hoveredRowId;
+          const isLink = row.interactive;
+          const labelX = row.x + paddingX;
+          const labelY = row.y + row.height / 2;
+          const textWidth = surface.textWidth(row.label);
 
-          surface.fill(useMask ? '#ffffff' : isHovered ? '#ffffff' : '#f4f1ea');
+          surface.fill(useMask ? '#ffffff' : isHovered ? '#39e476' : isLink ? '#20c05c' : '#f4f1ea');
           surface.textStyle('bold');
           surface.textSize(fontSize);
-          surface.text(row.label, row.x + paddingX, row.y + row.height / 2);
+          surface.text(row.label, labelX, labelY);
 
-          if (row.caret && (!useMask || config.includeCarets)) {
-            surface.fill(useMask ? '#ffffff' : isHovered ? '#39e476' : '#20c05c');
-            surface.textSize(fontSize * 0.72);
-            surface.text('>', row.x + row.width - paddingX, row.y + row.height / 2);
+          if (isLink) {
+            const underlineY = labelY + fontSize * 0.45;
+            surface.stroke(useMask ? '#ffffff' : isHovered ? '#39e476' : '#20c05c');
+            surface.strokeWeight(Math.max(1, fontSize * 0.055));
+            surface.line(labelX, underlineY, labelX + textWidth, underlineY);
+            surface.noStroke();
           }
         });
       }
@@ -659,385 +662,8 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
     };
   }, [items, config]);
 
-  function updateConfig(update: Partial<SdfConfig>) {
-    setConfig((current) => ({ ...current, ...update }));
-  }
-
-  function updatePass(index: 0 | 1, update: Partial<SdfPassConfig>) {
-    setConfig((current) => {
-      const passes = [...current.passes] as [SdfPassConfig, SdfPassConfig];
-      passes[index] = { ...passes[index], ...update };
-
-      return { ...current, passes };
-    });
-  }
-
-  function updateNumericInput(value: string, apply: (value: number) => void) {
-    if (value.trim() === '') {
-      return;
-    }
-
-    const nextValue = Number(value);
-
-    if (Number.isFinite(nextValue)) {
-      apply(nextValue);
-    }
-  }
-
-  function renderPassControls(index: 0 | 1, label: string) {
-    const pass = config.passes[index];
-
-    return (
-      <div className="sdf-dev-pass">
-        <div className="sdf-dev-pass-title">{label}</div>
-        {index === 1 ? (
-          <label className="sdf-dev-toggle">
-            enabled
-            <input
-              checked={pass.enabled}
-              onChange={(event) => updatePass(index, { enabled: event.target.checked })}
-              type="checkbox"
-            />
-          </label>
-        ) : null}
-        <label>
-          spread
-          <input
-            max="1600"
-            min="0"
-            onChange={(event) => updatePass(index, { spread: Number(event.target.value) })}
-            step="10"
-            type="range"
-            value={pass.spread}
-          />
-          <input
-            className="sdf-dev-number"
-            onChange={(event) =>
-              updateNumericInput(event.target.value, (value) => updatePass(index, { spread: value }))
-            }
-            step="any"
-            type="number"
-            value={pass.spread}
-          />
-        </label>
-        <label>
-          threshold
-          <input
-            max="255"
-            min="1"
-            onChange={(event) => updatePass(index, { seedThreshold: Number(event.target.value) })}
-            step="1"
-            type="range"
-            value={pass.seedThreshold}
-          />
-          <input
-            className="sdf-dev-number"
-            onChange={(event) =>
-              updateNumericInput(event.target.value, (value) =>
-                updatePass(index, { seedThreshold: value }),
-              )
-            }
-            step="any"
-            type="number"
-            value={pass.seedThreshold}
-          />
-        </label>
-        <label className="sdf-dev-toggle">
-          lines
-          <input
-            checked={pass.showLines}
-            onChange={(event) => updatePass(index, { showLines: event.target.checked })}
-            type="checkbox"
-          />
-        </label>
-        <label className="sdf-dev-toggle">
-          threshold
-          <input
-            checked={pass.thresholdLines}
-            onChange={(event) => updatePass(index, { thresholdLines: event.target.checked })}
-            type="checkbox"
-          />
-        </label>
-        <label className="sdf-dev-toggle">
-          invert
-          <input
-            checked={pass.invert}
-            onChange={(event) => updatePass(index, { invert: event.target.checked })}
-            type="checkbox"
-          />
-        </label>
-        <label>
-          modulo
-          <input
-            max="64"
-            min="1"
-            onChange={(event) => updatePass(index, { lineModulo: Number(event.target.value) })}
-            step="1"
-            type="range"
-            value={pass.lineModulo}
-          />
-          <input
-            className="sdf-dev-number"
-            onChange={(event) =>
-              updateNumericInput(event.target.value, (value) =>
-                updatePass(index, { lineModulo: value }),
-              )
-            }
-            step="any"
-            type="number"
-            value={pass.lineModulo}
-          />
-        </label>
-        <label>
-          thickness
-          <input
-            max="0.48"
-            min="0.01"
-            onChange={(event) => updatePass(index, { lineThickness: Number(event.target.value) })}
-            step="0.01"
-            type="range"
-            value={pass.lineThickness}
-          />
-          <input
-            className="sdf-dev-number"
-            onChange={(event) =>
-              updateNumericInput(event.target.value, (value) =>
-                updatePass(index, { lineThickness: value }),
-              )
-            }
-            step="any"
-            type="number"
-            value={pass.lineThickness}
-          />
-        </label>
-        <label>
-          cutoff min
-          <input
-            max="1"
-            min="0"
-            onChange={(event) => updatePass(index, { cutoffMin: Number(event.target.value) })}
-            step="0.01"
-            type="range"
-            value={pass.cutoffMin}
-          />
-          <input
-            className="sdf-dev-number"
-            onChange={(event) =>
-              updateNumericInput(event.target.value, (value) =>
-                updatePass(index, { cutoffMin: value }),
-              )
-            }
-            step="any"
-            type="number"
-            value={pass.cutoffMin}
-          />
-        </label>
-        <label>
-          cutoff max
-          <input
-            max="1"
-            min="0"
-            onChange={(event) => updatePass(index, { cutoffMax: Number(event.target.value) })}
-            step="0.01"
-            type="range"
-            value={pass.cutoffMax}
-          />
-          <input
-            className="sdf-dev-number"
-            onChange={(event) =>
-              updateNumericInput(event.target.value, (value) =>
-                updatePass(index, { cutoffMax: value }),
-              )
-            }
-            step="any"
-            type="number"
-            value={pass.cutoffMax}
-          />
-        </label>
-        <label>
-          noise amp
-          <input
-            max="400"
-            min="0"
-            onChange={(event) => updatePass(index, { noiseAmplitude: Number(event.target.value) })}
-            step="5"
-            type="range"
-            value={pass.noiseAmplitude}
-          />
-          <input
-            className="sdf-dev-number"
-            onChange={(event) =>
-              updateNumericInput(event.target.value, (value) =>
-                updatePass(index, { noiseAmplitude: value }),
-              )
-            }
-            step="any"
-            type="number"
-            value={pass.noiseAmplitude}
-          />
-        </label>
-        <label>
-          noise freq
-          <input
-            max="0.08"
-            min="0.001"
-            onChange={(event) => updatePass(index, { noiseFrequency: Number(event.target.value) })}
-            step="0.001"
-            type="range"
-            value={pass.noiseFrequency}
-          />
-          <input
-            className="sdf-dev-number"
-            onChange={(event) =>
-              updateNumericInput(event.target.value, (value) =>
-                updatePass(index, { noiseFrequency: value }),
-              )
-            }
-            step="any"
-            type="number"
-            value={pass.noiseFrequency}
-          />
-        </label>
-        <label>
-          pulse width
-          <input
-            max="1"
-            min="0"
-            onChange={(event) => updatePass(index, { pulseWidth: Number(event.target.value) })}
-            step="0.01"
-            type="range"
-            value={pass.pulseWidth}
-          />
-          <input
-            className="sdf-dev-number"
-            onChange={(event) =>
-              updateNumericInput(event.target.value, (value) =>
-                updatePass(index, { pulseWidth: value }),
-              )
-            }
-            step="any"
-            type="number"
-            value={pass.pulseWidth}
-          />
-        </label>
-        <label className="sdf-dev-color-row">
-          line color
-          <input
-            onChange={(event) => updatePass(index, { lineColor: event.target.value })}
-            type="color"
-            value={pass.lineColor}
-          />
-          <input
-            className="sdf-dev-color-value"
-            readOnly
-            value={pass.lineColor}
-          />
-        </label>
-        <label>
-          pulse speed
-          <input
-            max="4"
-            min="0"
-            onChange={(event) => updatePass(index, { pulseSpeed: Number(event.target.value) })}
-            step="0.01"
-            type="range"
-            value={pass.pulseSpeed}
-          />
-          <input
-            className="sdf-dev-number"
-            onChange={(event) =>
-              updateNumericInput(event.target.value, (value) =>
-                updatePass(index, { pulseSpeed: value }),
-              )
-            }
-            step="any"
-            type="number"
-            value={pass.pulseSpeed}
-          />
-        </label>
-        <label>
-          pulse interval
-          <input
-            max="10"
-            min="0.1"
-            onChange={(event) => updatePass(index, { pulseInterval: Number(event.target.value) })}
-            step="0.1"
-            type="range"
-            value={pass.pulseInterval}
-          />
-          <input
-            className="sdf-dev-number"
-            onChange={(event) =>
-              updateNumericInput(event.target.value, (value) =>
-                updatePass(index, { pulseInterval: value }),
-              )
-            }
-            step="any"
-            type="number"
-            value={pass.pulseInterval}
-          />
-        </label>
-        <label className="sdf-dev-color-row">
-          pulse color
-          <input
-            onChange={(event) => updatePass(index, { pulseColor: event.target.value })}
-            type="color"
-            value={pass.pulseColor}
-          />
-          <input
-            className="sdf-dev-color-value"
-            readOnly
-            value={pass.pulseColor}
-          />
-        </label>
-        <label className="sdf-dev-toggle">
-          pingpong
-          <input
-            checked={pass.pulsePingPong}
-            onChange={(event) => updatePass(index, { pulsePingPong: event.target.checked })}
-            type="checkbox"
-          />
-        </label>
-      </div>
-    );
-  }
-
   return (
     <div className="p5-home" ref={hostRef}>
-      <div className="sdf-dev-panel">
-        <label>
-          resolution
-          <input
-            max="1"
-            min="0.2"
-            onChange={(event) => updateConfig({ resolutionScale: Number(event.target.value) })}
-            step="0.05"
-            type="range"
-            value={config.resolutionScale}
-          />
-          <input
-            className="sdf-dev-number"
-            onChange={(event) =>
-              updateNumericInput(event.target.value, (value) =>
-                updateConfig({ resolutionScale: value }),
-              )
-            }
-            step="any"
-            type="number"
-            value={config.resolutionScale}
-          />
-        </label>
-        <label className="sdf-dev-toggle">
-          carets
-          <input
-            checked={config.includeCarets}
-            onChange={(event) => updateConfig({ includeCarets: event.target.checked })}
-            type="checkbox"
-          />
-        </label>
-        {renderPassControls(0, 'pass 1')}
-        {renderPassControls(1, 'pass 2')}
-      </div>
       <nav className="p5-home-nav visually-hidden" aria-label="Website sections">
         {items.map((item) => (
           <a
