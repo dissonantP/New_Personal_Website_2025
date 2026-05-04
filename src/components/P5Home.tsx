@@ -532,7 +532,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           <span>{pass.spread}</span>
         </label>
         <label>
-          seed
+          threshold
           <input
             max="255"
             min="1"
