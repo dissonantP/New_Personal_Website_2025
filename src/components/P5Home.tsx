@@ -13,17 +13,18 @@ type P5HomeProps = {
   onNavigate: (id: HomeItemId) => void;
 };
 
-type RowLayout = {
-  id: 'title' | 'links';
-  label: string;
+type TextBlockLayout = {
+  id: 'title' | 'description' | 'links';
   lines: string[];
-  targets?: [HomeItemId, HomeItemId];
   x: number;
   y: number;
   width: number;
   height: number;
+  fontSize: number;
+  align: 'left' | 'center';
   interactive: boolean;
-  weight: number;
+  lineGap: number;
+  targets?: [HomeItemId, HomeItemId];
 };
 
 type SdfPassConfig = {
@@ -67,6 +68,7 @@ type SdfPassRender = {
 };
 
 const title = 'Max Pleaner';
+const titleLines = [title];
 const descriptionLines = ['', 'does', '  software', '  art', '  media', '  and music'];
 const descriptionOffsetX = 20;
 const fontStack =
@@ -125,10 +127,6 @@ function clamp(min: number, value: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function isHomeLinkRow(row: RowLayout | undefined): row is RowLayout & { id: 'links' } {
-  return Boolean(row && row.id === 'links');
-}
-
 function getHomeOffset(width: number) {
   if (width <= 640) {
     return clamp(42, width * 0.14, 72);
@@ -137,12 +135,49 @@ function getHomeOffset(width: number) {
   return clamp(72, width * 0.095, 140);
 }
 
-function getRowFontSize(rowId: RowLayout['id'], width: number) {
-  if (rowId === 'title') {
+function getBlockFontSize(blockId: TextBlockLayout['id'], width: number) {
+  if (blockId === 'title') {
     return clamp(26, width * 0.05, 44);
   }
 
   return clamp(18, width * 0.035, 24);
+}
+
+function getBlockLineGap(blockId: TextBlockLayout['id'], fontSize: number) {
+  if (blockId === 'title') {
+    return fontSize * 0.15;
+  }
+
+  if (blockId === 'description') {
+    return fontSize * 0.28;
+  }
+
+  return fontSize * 0.45;
+}
+
+function measureTextBlock(
+  p: p5 | p5.Graphics,
+  block: Pick<TextBlockLayout, 'id' | 'lines' | 'interactive' | 'targets'> & {
+    x: number;
+    y: number;
+    fontSize: number;
+    align: 'left' | 'center';
+  },
+): TextBlockLayout {
+  p.textFont(fontStack);
+  p.textSize(block.fontSize);
+
+  const lineGap = getBlockLineGap(block.id, block.fontSize);
+  const lineHeight = block.fontSize * 0.95;
+  const width = Math.max(...block.lines.map((line) => p.textWidth(line)));
+  const height = lineHeight * block.lines.length + lineGap * Math.max(0, block.lines.length - 1);
+
+  return {
+    ...block,
+    width,
+    height,
+    lineGap,
+  };
 }
 
 function getLayout(
@@ -150,69 +185,70 @@ function getLayout(
   items: HomeItem[],
   width: number,
   height: number,
-): RowLayout[] {
-  const paddingX = clamp(20, width * 0.05, 56);
-  const paddingY = clamp(18, height * 0.028, 28);
-  const rowGap = clamp(42, height * 0.075, 82);
+): TextBlockLayout[] {
   const homeOffset = getHomeOffset(width);
-  const rows = [
-    { id: 'title' as const, label: title, lines: [title, ...descriptionLines] },
+  const titleFontSize = getBlockFontSize('title', width);
+  const bodyFontSize = getBlockFontSize('description', width);
+  const linkFontSize = getBlockFontSize('links', width);
+
+  const titleMeasure = measureTextBlock(p, {
+    id: 'title',
+    lines: titleLines,
+    x: 0,
+    y: 0,
+    fontSize: titleFontSize,
+    align: 'center',
+    interactive: false,
+  });
+  const descriptionMeasure = measureTextBlock(p, {
+    id: 'description',
+    lines: descriptionLines,
+    x: 0,
+    y: 0,
+    fontSize: bodyFontSize,
+    align: 'center',
+    interactive: false,
+  });
+  const linksMeasure = measureTextBlock(p, {
+    id: 'links',
+    lines: items.map((item) => item.label),
+    x: 0,
+    y: 0,
+    fontSize: linkFontSize,
+    align: 'left',
+    interactive: true,
+    targets: [items[0].id, items[1].id] as [HomeItemId, HomeItemId],
+  });
+
+  const titleTop = clamp(56, height * 0.18, height * 0.32);
+  const descriptionTop = titleTop + titleMeasure.height + clamp(12, height * 0.02, 20);
+  const linksTop = descriptionTop + descriptionMeasure.height + clamp(44, height * 0.09, 88);
+  const titleX = (width - titleMeasure.width) / 2;
+  const descriptionX = (width - descriptionMeasure.width) / 2 + descriptionOffsetX;
+  const linksX = (width - linksMeasure.width) / 2 - homeOffset;
+
+  return [
     {
-      id: 'links' as const,
-      label: items.map((item) => item.label).join('\n'),
-      lines: items.map((item) => item.label),
+      ...titleMeasure,
+      x: titleX,
+      y: titleTop,
+      align: 'center',
+    },
+    {
+      ...descriptionMeasure,
+      x: descriptionX,
+      y: descriptionTop,
+      align: 'center',
+    },
+    {
+      ...linksMeasure,
+      x: linksX,
+      y: linksTop,
+      align: 'left',
+      interactive: true,
       targets: [items[0].id, items[1].id] as [HomeItemId, HomeItemId],
     },
   ];
-  const layoutRows = rows.map((row) => {
-    const fontSize = getRowFontSize(row.id, width);
-    const rowHeight =
-      row.id === 'title'
-        ? fontSize * 0.95 + descriptionLines.length * (fontSize * 0.035 * 1.35) + paddingY * 2
-        : fontSize * 0.95 + (fontSize * 0.95 + fontSize * 0.45) + paddingY * 2;
-
-    p.textFont(fontStack);
-    p.textSize(fontSize);
-
-    const textWidth =
-      row.id === 'title'
-        ? Math.max(p.textWidth(title), ...descriptionLines.map((line) => p.textWidth(line)))
-        : Math.max(...row.lines.map((line) => p.textWidth(line)));
-    const rowWidth = textWidth + paddingX * 2;
-
-    return {
-      ...row,
-      fontSize,
-      rowHeight,
-      rowWidth,
-    };
-  });
-  const totalHeight =
-    layoutRows.reduce((sum, row) => sum + row.rowHeight, 0) + (layoutRows.length - 1) * rowGap;
-  const startY = (height - totalHeight) / 2;
-  let y = startY;
-
-  return layoutRows.map((row) => {
-    const interactive = row.id !== 'title';
-    const centeredX = (width - row.rowWidth) / 2;
-    const x = row.id === 'title' ? centeredX : centeredX - homeOffset;
-    const layout = {
-      id: row.id,
-      label: row.label,
-      lines: row.lines,
-      targets: row.targets,
-      x,
-      y,
-      width: row.rowWidth,
-      height: row.rowHeight,
-      interactive,
-      weight: row.id === 'title' ? 900 : 700,
-    };
-
-    y += row.rowHeight + rowGap;
-
-    return layout;
-  });
 }
 
 function smoothstep(edge0: number, edge1: number, value: number) {
@@ -527,7 +563,7 @@ function hasPulseAnimation(config: SdfConfig) {
 export function P5Home({ items, onNavigate }: P5HomeProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const sketchRef = useRef<p5 | null>(null);
-  const layoutRef = useRef<RowLayout[]>([]);
+  const layoutRef = useRef<TextBlockLayout[]>([]);
   const navigateRef = useRef(onNavigate);
   const config = defaultSdfConfig;
 
@@ -537,89 +573,67 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
 
   useEffect(() => {
     const sketch = (p: p5) => {
-      let hoveredRowId: RowLayout['id'] | null = null;
+      let hoveredBlockId: TextBlockLayout['id'] | null = null;
       let baseSdfImage: p5.Image | null = null;
       let sdfImage: p5.Image | null = null;
       let sdfPipeline: SdfPassRender[] = [];
       let resizeTimer: number | null = null;
 
-      function getInteractiveRow() {
-        return layoutRef.current.find((row) => {
+      function getInteractiveBlock() {
+        return layoutRef.current.find((block) => {
           return (
-            row.interactive &&
-            p.mouseX >= row.x &&
-            p.mouseX <= row.x + row.width &&
-            p.mouseY >= row.y &&
-            p.mouseY <= row.y + row.height
+            block.interactive &&
+            p.mouseX >= block.x &&
+            p.mouseX <= block.x + block.width &&
+            p.mouseY >= block.y &&
+            p.mouseY <= block.y + block.height
           );
         });
       }
 
       function updateHover() {
-        const row = getInteractiveRow();
-        const nextHoveredRowId = row ? row.id : null;
+        const block = getInteractiveBlock();
+        const nextHoveredBlockId = block ? block.id : null;
 
-        if (nextHoveredRowId !== hoveredRowId) {
-          hoveredRowId = nextHoveredRowId;
+        if (nextHoveredBlockId !== hoveredBlockId) {
+          hoveredBlockId = nextHoveredBlockId;
           renderHome();
         }
 
-        p.cursor(hoveredRowId ? p.HAND : p.ARROW);
+        p.cursor(hoveredBlockId ? p.HAND : p.ARROW);
       }
 
-      function drawContentRows(
+      function drawTextBlocks(
         surface: p5 | p5.Graphics,
-        rows: RowLayout[],
+        blocks: TextBlockLayout[],
         useMask: boolean,
-        layoutWidth: number,
       ) {
         surface.textFont(fontStack);
         surface.textAlign('left', 'center');
         surface.noStroke();
 
-        rows.forEach((row) => {
-          const fontSize = getRowFontSize(row.id, layoutWidth);
-          const paddingX = clamp(20, layoutWidth * 0.05, 56);
-          const isHovered = row.id === hoveredRowId;
-          const isLink = row.interactive;
-          const labelX = row.x + paddingX;
-          const titleLineHeight = fontSize * 0.95;
-          const bodyFontSize = getRowFontSize('links', layoutWidth);
-          const bodyLineHeight = bodyFontSize * 1.15;
+        blocks.forEach((block) => {
+          const lineHeight = block.fontSize * 0.95;
+          const blockStep = lineHeight + block.lineGap;
+          const isHovered = block.id === hoveredBlockId;
+          const isLink = block.interactive;
+          const textAlign = block.align;
 
           surface.fill(
             useMask ? '#ffffff' : isHovered ? '#39e476' : isLink ? '#20c05c' : '#f4f1ea',
           );
           surface.textStyle('bold');
-
-          if (row.id === 'title') {
-            const titleTop = row.y + (row.height - (titleLineHeight + bodyLineHeight * descriptionLines.length)) / 2;
-            surface.textSize(fontSize);
-            surface.text(title, labelX, titleTop + titleLineHeight / 2);
-            surface.textSize(bodyFontSize);
-            descriptionLines.forEach((line, index) => {
-              surface.text(
-                line,
-                labelX + descriptionOffsetX,
-                titleTop + titleLineHeight + bodyLineHeight * index + bodyLineHeight / 2,
-              );
-            });
-          } else {
-            const linkLineHeight = fontSize * 0.95;
-            const linkGap = fontSize * 0.45;
-            const textTop = row.y + (row.height - (linkLineHeight * row.lines.length + linkGap)) / 2;
-
-            surface.textSize(fontSize);
-            row.lines.forEach((line, index) => {
-              surface.text(line, labelX, textTop + (linkLineHeight + linkGap) * index + linkLineHeight / 2);
-            });
-          }
+          surface.textAlign(textAlign, 'center');
+          surface.textSize(block.fontSize);
+          block.lines.forEach((line, index) => {
+            surface.text(line, block.x, block.y + blockStep * index + lineHeight / 2);
+          });
         });
       }
 
       function renderHome() {
-        const rows = getLayout(p, items, p.width, p.height);
-        layoutRef.current = rows;
+        const blocks = getLayout(p, items, p.width, p.height);
+        layoutRef.current = blocks;
 
         p.background('#111111');
 
@@ -627,7 +641,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           p.image(sdfImage, 0, 0, p.width, p.height);
         }
 
-        drawContentRows(p, rows, false, p.width);
+        drawTextBlocks(p, blocks, false);
       }
 
       function rebuildDistanceField() {
@@ -636,7 +650,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
         const width = useFullResolution ? p.width : Math.max(1, Math.round(p.width * scale));
         const height = useFullResolution ? p.height : Math.max(1, Math.round(p.height * scale));
         const mask = p.createGraphics(width, height);
-        const rows = getLayout(p, items, p.width, p.height);
+        const blocks = getLayout(p, items, p.width, p.height);
 
         mask.pixelDensity(1);
         mask.background('#000000');
@@ -646,7 +660,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           mask.scale(scale);
         }
 
-        drawContentRows(mask, rows, true, p.width);
+        drawTextBlocks(mask, blocks, true);
 
         if (!useFullResolution) {
           mask.pop();
@@ -678,7 +692,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
         const canvas = p.createCanvas(host.clientWidth, host.clientHeight);
         canvas.parent(hostRef.current as HTMLDivElement);
         canvas.elt.addEventListener('mouseleave', () => {
-          hoveredRowId = null;
+          hoveredBlockId = null;
           p.cursor(p.ARROW);
           renderHome();
         });
@@ -707,11 +721,17 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
       };
 
       p.mouseClicked = () => {
-        const row = getInteractiveRow();
+        const block = getInteractiveBlock();
 
-        if (isHomeLinkRow(row) && row.targets) {
-          const splitPoint = row.y + row.height / 2;
-          navigateRef.current(p.mouseY < splitPoint ? row.targets[0] : row.targets[1]);
+        if (block && block.id === 'links' && block.targets) {
+          const lineHeight = block.fontSize * 0.95;
+          const lineStep = lineHeight + block.lineGap;
+          const lineIndex = clamp(0, Math.floor((p.mouseY - block.y) / lineStep), block.lines.length - 1);
+          const target = block.targets[lineIndex];
+
+          if (target) {
+            navigateRef.current(target);
+          }
         }
       };
     };
