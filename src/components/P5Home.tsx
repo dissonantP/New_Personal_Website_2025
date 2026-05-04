@@ -37,6 +37,7 @@ type SdfPassConfig = {
   cutoffMax: number;
   noiseAmplitude: number;
   noiseFrequency: number;
+  lineColor: string;
   pulseWidth: number;
   pulseSpeed: number;
   pulseInterval: number;
@@ -85,6 +86,7 @@ const sdfPresets = {
         cutoffMax: 1,
         noiseAmplitude: 80,
         noiseFrequency: 0.027,
+        lineColor: '#ffffff',
         pulseWidth: 0.04,
         pulseSpeed: 0.37,
         pulseInterval: 5,
@@ -104,6 +106,7 @@ const sdfPresets = {
         cutoffMax: 1,
         noiseAmplitude: 0,
         noiseFrequency: 0.012,
+        lineColor: '#ffffff',
         pulseWidth: 0,
         pulseSpeed: 0,
         pulseInterval: 2,
@@ -325,6 +328,7 @@ function renderSdfLinePass(
   const pulsePixelList: number[] = [];
   const pulsePositionList: number[] = [];
   const scaledSpread = config.spread * field.sourceScale;
+  const lineColor = parseHexColor(config.lineColor);
 
   image.loadPixels();
 
@@ -361,9 +365,9 @@ function renderSdfLinePass(
         pulsePositionList.push(t);
       }
 
-      image.pixels[pixelIndex] = value;
-      image.pixels[pixelIndex + 1] = value;
-      image.pixels[pixelIndex + 2] = value;
+      image.pixels[pixelIndex] = config.showLines && thresholdBand > 0 ? lineColor[0] : value;
+      image.pixels[pixelIndex + 1] = config.showLines && thresholdBand > 0 ? lineColor[1] : value;
+      image.pixels[pixelIndex + 2] = config.showLines && thresholdBand > 0 ? lineColor[2] : value;
       image.pixels[pixelIndex + 3] = 255;
     }
   }
@@ -914,6 +918,19 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             step="any"
             type="number"
             value={pass.pulseWidth}
+          />
+        </label>
+        <label className="sdf-dev-color-row">
+          line color
+          <input
+            onChange={(event) => updatePass(index, { lineColor: event.target.value })}
+            type="color"
+            value={pass.lineColor}
+          />
+          <input
+            className="sdf-dev-color-value"
+            readOnly
+            value={pass.lineColor}
           />
         </label>
         <label>
