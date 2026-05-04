@@ -37,9 +37,9 @@ type SdfPassConfig = {
   cutoffMax: number;
   noiseAmplitude: number;
   noiseFrequency: number;
-  minColor: string;
-  maxColor: string;
-  colorSpeed: number;
+  pulseWidth: number;
+  pulseSpeed: number;
+  pulseInterval: number;
 };
 
 type SdfConfig = {
@@ -81,9 +81,9 @@ const sdfPresets = {
         cutoffMax: 1,
         noiseAmplitude: 30,
         noiseFrequency: 0.035,
-        minColor: '#ffffff',
-        maxColor: '#ffffff',
-        colorSpeed: 0,
+        pulseWidth: 0,
+        pulseSpeed: 0,
+        pulseInterval: 2,
       },
       {
         enabled: false,
@@ -98,9 +98,9 @@ const sdfPresets = {
         cutoffMax: 1,
         noiseAmplitude: 0,
         noiseFrequency: 0.012,
-        minColor: '#ffffff',
-        maxColor: '#ffffff',
-        colorSpeed: 0,
+        pulseWidth: 0,
+        pulseSpeed: 0,
+        pulseInterval: 2,
       },
     ],
   },
@@ -176,30 +176,18 @@ function sampleFalloff(value: number) {
   return 1 - smoothstep(0, 1, value);
 }
 
-function parseHexColor(color: string): [number, number, number] {
-  const normalized = color.replace('#', '');
-
-  if (!/^[\da-f]{6}$/i.test(normalized)) {
-    return [255, 255, 255];
+function samplePulse(t: number, elapsedSeconds: number, config: SdfPassConfig) {
+  if (config.pulseWidth <= 0 || config.pulseSpeed <= 0 || config.pulseInterval <= 0) {
+    return 0;
   }
 
-  return [
-    Number.parseInt(normalized.slice(0, 2), 16),
-    Number.parseInt(normalized.slice(2, 4), 16),
-    Number.parseInt(normalized.slice(4, 6), 16),
-  ];
-}
+  const pulseCenter = (elapsedSeconds % config.pulseInterval) * config.pulseSpeed;
 
-function mixColor(
-  start: [number, number, number],
-  end: [number, number, number],
-  value: number,
-): [number, number, number] {
-  return [
-    Math.round(start[0] + (end[0] - start[0]) * value),
-    Math.round(start[1] + (end[1] - start[1]) * value),
-    Math.round(start[2] + (end[2] - start[2]) * value),
-  ];
+  if (pulseCenter > 1 + config.pulseWidth) {
+    return 0;
+  }
+
+  return Math.abs(t - pulseCenter) <= config.pulseWidth / 2 ? 1 : 0;
 }
 
 function distanceTransform1d(input: Float32Array, output: Float32Array, length: number) {
@@ -307,12 +295,10 @@ function renderSdfLinePass(
   field: SdfField,
   p: p5,
   config: SdfPassConfig,
-  colorPhase = 0,
+  elapsedSeconds = 0,
 ) {
   const image = p.createImage(field.width, field.height);
   const scaledSpread = config.spread * field.sourceScale;
-  const minColor = parseHexColor(config.minColor);
-  const maxColor = parseHexColor(config.maxColor);
 
   image.loadPixels();
 
@@ -343,13 +329,12 @@ function renderSdfLinePass(
         : brightness * lineMask;
       const output = config.showLines ? line : brightness;
       const value = Math.round((config.invert && !config.thresholdLines ? 1 - output : output) * 255);
-      const lineColorT = (((t + colorPhase) % 1) + 1) % 1;
-      const lineColor = mixColor(minColor, maxColor, lineColorT);
-      const useLineColor = config.showLines && thresholdBand > 0;
+      const pulse = config.showLines && thresholdBand > 0 ? samplePulse(t, elapsedSeconds, config) : 0;
+      const outputValue = pulse > 0 ? 0 : value;
 
-      image.pixels[pixelIndex] = useLineColor ? lineColor[0] : value;
-      image.pixels[pixelIndex + 1] = useLineColor ? lineColor[1] : value;
-      image.pixels[pixelIndex + 2] = useLineColor ? lineColor[2] : value;
+      image.pixels[pixelIndex] = outputValue;
+      image.pixels[pixelIndex + 1] = outputValue;
+      image.pixels[pixelIndex + 2] = outputValue;
       image.pixels[pixelIndex + 3] = 255;
     }
   }
@@ -410,15 +395,17 @@ function renderSdfPasses(
   let image: p5.Image | null = null;
 
   pipeline.forEach(({ config, field }) => {
-    const nextImage = renderSdfLinePass(field, p, config, elapsedSeconds * config.colorSpeed);
+    const nextImage = renderSdfLinePass(field, p, config, elapsedSeconds);
     image = image ? compositeMax(image, nextImage, p) : nextImage;
   });
 
   return image;
 }
 
-function hasColorAnimation(config: SdfConfig) {
-  return config.passes.some((pass) => pass.enabled && pass.showLines && pass.colorSpeed !== 0);
+function hasPulseAnimation(config: SdfConfig) {
+  return config.passes.some((pass) => {
+    return pass.enabled && pass.showLines && pass.pulseWidth > 0 && pass.pulseSpeed > 0;
+  });
 }
 
 export function P5Home({ items, onNavigate }: P5HomeProps) {
@@ -531,7 +518,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
         mask.remove();
         renderHome();
 
-        if (hasColorAnimation(config)) {
+        if (hasPulseAnimation(config)) {
           p.loop();
         } else {
           p.noLoop();
@@ -560,7 +547,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
       };
 
       p.draw = () => {
-        if (!sdfPipeline.length || !hasColorAnimation(config)) {
+        if (!sdfPipeline.length || !hasPulseAnimation(config)) {
           return;
         }
 
@@ -835,52 +822,70 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             value={pass.noiseFrequency}
           />
         </label>
-        <label className="sdf-dev-color-row">
-          min color
-          <input
-            onChange={(event) => updatePass(index, { minColor: event.target.value })}
-            type="color"
-            value={pass.minColor}
-          />
-          <input
-            className="sdf-dev-color-value"
-            readOnly
-            value={pass.minColor}
-          />
-        </label>
-        <label className="sdf-dev-color-row">
-          max color
-          <input
-            onChange={(event) => updatePass(index, { maxColor: event.target.value })}
-            type="color"
-            value={pass.maxColor}
-          />
-          <input
-            className="sdf-dev-color-value"
-            readOnly
-            value={pass.maxColor}
-          />
-        </label>
         <label>
-          color speed
+          pulse width
           <input
-            max="4"
-            min="-4"
-            onChange={(event) => updatePass(index, { colorSpeed: Number(event.target.value) })}
+            max="1"
+            min="0"
+            onChange={(event) => updatePass(index, { pulseWidth: Number(event.target.value) })}
             step="0.01"
             type="range"
-            value={pass.colorSpeed}
+            value={pass.pulseWidth}
           />
           <input
             className="sdf-dev-number"
             onChange={(event) =>
               updateNumericInput(event.target.value, (value) =>
-                updatePass(index, { colorSpeed: value }),
+                updatePass(index, { pulseWidth: value }),
               )
             }
             step="any"
             type="number"
-            value={pass.colorSpeed}
+            value={pass.pulseWidth}
+          />
+        </label>
+        <label>
+          pulse speed
+          <input
+            max="4"
+            min="0"
+            onChange={(event) => updatePass(index, { pulseSpeed: Number(event.target.value) })}
+            step="0.01"
+            type="range"
+            value={pass.pulseSpeed}
+          />
+          <input
+            className="sdf-dev-number"
+            onChange={(event) =>
+              updateNumericInput(event.target.value, (value) =>
+                updatePass(index, { pulseSpeed: value }),
+              )
+            }
+            step="any"
+            type="number"
+            value={pass.pulseSpeed}
+          />
+        </label>
+        <label>
+          pulse interval
+          <input
+            max="10"
+            min="0.1"
+            onChange={(event) => updatePass(index, { pulseInterval: Number(event.target.value) })}
+            step="0.1"
+            type="range"
+            value={pass.pulseInterval}
+          />
+          <input
+            className="sdf-dev-number"
+            onChange={(event) =>
+              updateNumericInput(event.target.value, (value) =>
+                updatePass(index, { pulseInterval: value }),
+              )
+            }
+            step="any"
+            type="number"
+            value={pass.pulseInterval}
           />
         </label>
       </div>
