@@ -24,11 +24,6 @@ type RowLayout = {
   weight: number;
 };
 
-type FalloffStop = {
-  at: number;
-  value: number;
-};
-
 type SdfConfig = {
   resolutionScale: number;
   spread: number;
@@ -37,16 +32,8 @@ type SdfConfig = {
   showLines: boolean;
   thresholdLines: boolean;
   invert: boolean;
-  animateLines: boolean;
-  lineSpeed: number;
   lineModulo: number;
   lineThickness: number;
-  lineInnerBrightness: number;
-  linePeakPosition: number;
-  linePeakWidth: number;
-  lineOuterBrightness: number;
-  lineOverallBrightness: number;
-  falloff: FalloffStop[];
 };
 
 type SdfField = {
@@ -67,21 +54,8 @@ const defaultSdfConfig: SdfConfig = {
   showLines: true,
   thresholdLines: true,
   invert: false,
-  animateLines: true,
-  lineSpeed: 2,
   lineModulo: 48,
   lineThickness: 0.11,
-  lineInnerBrightness: 0,
-  linePeakPosition: 0.5,
-  linePeakWidth: 0,
-  lineOuterBrightness: 0,
-  lineOverallBrightness: 1,
-  falloff: [
-    { at: 0, value: 1 },
-    { at: 0, value: 0 },
-    { at: 1, value: 1 },
-    { at: 1, value: 0 },
-  ] satisfies FalloffStop[],
 };
 
 function clamp(min: number, value: number, max: number) {
@@ -148,34 +122,8 @@ function smoothstep(edge0: number, edge1: number, value: number) {
   return t * t * (3 - 2 * t);
 }
 
-function sampleFalloff(stops: FalloffStop[], value: number) {
-  for (let index = 1; index < stops.length; index += 1) {
-    const previous = stops[index - 1];
-    const next = stops[index];
-
-    if (value <= next.at) {
-      const interpolation = smoothstep(previous.at, next.at, value);
-
-      return previous.value + (next.value - previous.value) * interpolation;
-    }
-  }
-
-  return stops[stops.length - 1].value;
-}
-
-function sampleLineBrightness(config: SdfConfig, value: number) {
-  const peakPosition = clamp(0.001, config.linePeakPosition, 0.999);
-  const peakWidth = clamp(0.0001, config.linePeakWidth, 0.98);
-  const baseline =
-    config.lineInnerBrightness +
-    (config.lineOuterBrightness - config.lineInnerBrightness) * smoothstep(0, 1, value);
-  const peakBaseline =
-    config.lineInnerBrightness +
-    (config.lineOuterBrightness - config.lineInnerBrightness) * smoothstep(0, 1, peakPosition);
-  const distanceFromPeak = (value - peakPosition) / peakWidth;
-  const peakInfluence = Math.exp(-8 * distanceFromPeak * distanceFromPeak);
-
-  return baseline + (config.lineOverallBrightness - peakBaseline) * peakInfluence;
+function sampleFalloff(value: number) {
+  return smoothstep(0, 1, value);
 }
 
 function distanceTransform1d(input: Float32Array, output: Float32Array, length: number) {
@@ -275,7 +223,7 @@ function createDistanceField(source: p5.Graphics, config: SdfConfig, sourceScale
   };
 }
 
-function renderDistanceField(field: SdfField, p: p5, config: SdfConfig, linePhaseOffset = 0) {
+function renderDistanceField(field: SdfField, p: p5, config: SdfConfig) {
   const image = p.createImage(field.width, field.height);
   const scaledSpread = config.spread * field.sourceScale;
 
@@ -288,16 +236,14 @@ function renderDistanceField(field: SdfField, p: p5, config: SdfConfig, linePhas
       const distance = Math.sqrt(field.distances[fieldIndex]);
       const rawT = distance / scaledSpread;
       const t = clamp(0, rawT, 1);
-      const brightness = sampleFalloff(config.falloff, t);
-      const phase = (((t * config.lineModulo - linePhaseOffset) % 1) + 1) % 1;
+      const brightness = sampleFalloff(t);
+      const phase = (t * config.lineModulo) % 1;
       const lineDistance = Math.min(phase, 1 - phase);
       const thresholdBand = rawT < 1 && lineDistance <= config.lineThickness ? 1 : 0;
       const lineMask = config.invert ? 1 - thresholdBand : thresholdBand;
-      const lineBrightness = sampleLineBrightness(config, t);
-      const thresholdLineColor = clamp(0, lineBrightness, 1);
       const thresholdLineBackground = config.invert ? 1 : 0;
       const line = config.thresholdLines
-        ? lineMask * thresholdLineColor + (1 - lineMask) * thresholdLineBackground
+        ? lineMask + (1 - lineMask) * thresholdLineBackground
         : brightness * lineMask;
       const output = config.showLines ? line : brightness;
       const value = Math.round((config.invert && !config.thresholdLines ? 1 - output : output) * 255);
@@ -328,7 +274,6 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
   useEffect(() => {
     const sketch = (p: p5) => {
       let hoveredRowId: HomeItemId | null = null;
-      let sdfField: SdfField | null = null;
       let sdfImage: p5.Image | null = null;
       let resizeTimer: number | null = null;
 
@@ -419,16 +364,11 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           mask.pop();
         }
 
-        sdfField = createDistanceField(mask, config, useFullResolution ? 1 : scale);
+        const sdfField = createDistanceField(mask, config, useFullResolution ? 1 : scale);
         sdfImage = renderDistanceField(sdfField, p, config);
         mask.remove();
         renderHome();
-
-        if (config.animateLines && config.showLines) {
-          p.loop();
-        } else {
-          p.noLoop();
-        }
+        p.noLoop();
       }
 
       function scheduleDistanceFieldRebuild() {
@@ -450,15 +390,6 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
         });
         p.pixelDensity(1);
         rebuildDistanceField();
-      };
-
-      p.draw = () => {
-        if (!config.animateLines || !config.showLines || !sdfField) {
-          return;
-        }
-
-        sdfImage = renderDistanceField(sdfField, p, config, (p.millis() / 1000) * config.lineSpeed);
-        renderHome();
       };
 
       p.windowResized = () => {
@@ -491,15 +422,6 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
 
   function updateConfig(update: Partial<SdfConfig>) {
     setConfig((current) => ({ ...current, ...update }));
-  }
-
-  function updateFalloff(index: number, update: Partial<FalloffStop>) {
-    setConfig((current) => ({
-      ...current,
-      falloff: current.falloff.map((stop, stopIndex) =>
-        stopIndex === index ? { ...stop, ...update } : stop,
-      ),
-    }));
   }
 
   return (
@@ -541,54 +463,6 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           />
           <span>{config.seedThreshold}</span>
         </label>
-        <label>
-          first stop
-          <input
-            max="1"
-            min="0.02"
-            onChange={(event) => updateFalloff(1, { at: Number(event.target.value) })}
-            step="0.01"
-            type="range"
-            value={config.falloff[1].at}
-          />
-          <span>{config.falloff[1].at.toFixed(2)}</span>
-        </label>
-        <label>
-          first value
-          <input
-            max="1"
-            min="0"
-            onChange={(event) => updateFalloff(1, { value: Number(event.target.value) })}
-            step="0.01"
-            type="range"
-            value={config.falloff[1].value}
-          />
-          <span>{config.falloff[1].value.toFixed(2)}</span>
-        </label>
-        <label>
-          second stop
-          <input
-            max="1"
-            min="0.02"
-            onChange={(event) => updateFalloff(2, { at: Number(event.target.value) })}
-            step="0.01"
-            type="range"
-            value={config.falloff[2].at}
-          />
-          <span>{config.falloff[2].at.toFixed(2)}</span>
-        </label>
-        <label>
-          second value
-          <input
-            max="1"
-            min="0"
-            onChange={(event) => updateFalloff(2, { value: Number(event.target.value) })}
-            step="0.01"
-            type="range"
-            value={config.falloff[2].value}
-          />
-          <span>{config.falloff[2].value.toFixed(2)}</span>
-        </label>
         <label className="sdf-dev-toggle">
           carets
           <input
@@ -621,14 +495,6 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             type="checkbox"
           />
         </label>
-        <label className="sdf-dev-toggle">
-          animate
-          <input
-            checked={config.animateLines}
-            onChange={(event) => updateConfig({ animateLines: event.target.checked })}
-            type="checkbox"
-          />
-        </label>
         <label>
           modulo
           <input
@@ -642,18 +508,6 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           <span>{config.lineModulo}</span>
         </label>
         <label>
-          speed
-          <input
-            max="2"
-            min="-2"
-            onChange={(event) => updateConfig({ lineSpeed: Number(event.target.value) })}
-            step="0.02"
-            type="range"
-            value={config.lineSpeed}
-          />
-          <span>{config.lineSpeed.toFixed(2)}</span>
-        </label>
-        <label>
           thickness
           <input
             max="0.48"
@@ -664,76 +518,6 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
             value={config.lineThickness}
           />
           <span>{config.lineThickness.toFixed(2)}</span>
-        </label>
-        <label>
-          inner min
-          <input
-            max="2"
-            min="0"
-            onChange={(event) =>
-              updateConfig({ lineInnerBrightness: Number(event.target.value) })
-            }
-            step="0.01"
-            type="range"
-            value={config.lineInnerBrightness}
-          />
-          <span>{config.lineInnerBrightness.toFixed(2)}</span>
-        </label>
-        <label>
-          peak at
-          <input
-            max="0.98"
-            min="0.02"
-            onChange={(event) =>
-              updateConfig({ linePeakPosition: Number(event.target.value) })
-            }
-            step="0.01"
-            type="range"
-            value={config.linePeakPosition}
-          />
-          <span>{config.linePeakPosition.toFixed(2)}</span>
-        </label>
-        <label>
-          peak width
-          <input
-            max="0.98"
-            min="0"
-            onChange={(event) =>
-              updateConfig({ linePeakWidth: Number(event.target.value) })
-            }
-            step="0.01"
-            type="range"
-            value={config.linePeakWidth}
-          />
-          <span>{config.linePeakWidth.toFixed(2)}</span>
-        </label>
-        <label>
-          peak
-          <input
-            max="2"
-            min="0"
-            onChange={(event) =>
-              updateConfig({ lineOverallBrightness: Number(event.target.value) })
-            }
-            step="0.01"
-            type="range"
-            value={config.lineOverallBrightness}
-          />
-          <span>{config.lineOverallBrightness.toFixed(2)}</span>
-        </label>
-        <label>
-          outer min
-          <input
-            max="2"
-            min="0"
-            onChange={(event) =>
-              updateConfig({ lineOuterBrightness: Number(event.target.value) })
-            }
-            step="0.01"
-            type="range"
-            value={config.lineOuterBrightness}
-          />
-          <span>{config.lineOuterBrightness.toFixed(2)}</span>
         </label>
       </div>
       <nav className="p5-home-nav visually-hidden" aria-label="Website sections">
