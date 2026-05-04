@@ -26,8 +26,7 @@ type SdfPassConfig = {
   pulseSpeed: number;
   pulseInterval: number;
   pulseStart: number;
-  pulseStartColor: string;
-  pulseEndColor: string;
+  pulseColor: string;
   pulsePingPong: boolean;
 };
 
@@ -73,9 +72,9 @@ const sdfPresets = {
         cutoffMax: 1,
         noiseAmplitude: 80,
         noiseFrequency: 0.027,
-        startColor: '#000000',
-        endColor: '#FFFFFF',
-        gradientPow: 1.4,
+        startColor: '#222222',
+        endColor: '#222222',
+        gradientPow: 1,
         firstLineColor: '#006600',
         firstLineColorWidth: 0.08,
         firstLineColorStart: 0,
@@ -83,8 +82,7 @@ const sdfPresets = {
         pulseSpeed: 0.2,
         pulseInterval: 4,
         pulseStart: 0,
-        pulseStartColor: '#006600',
-        pulseEndColor: '#000000',
+        pulseColor: '#006600',
         pulsePingPong: false,
       },
       {
@@ -110,8 +108,7 @@ const sdfPresets = {
         pulseSpeed: 0,
         pulseInterval: 2,
         pulseStart: 0,
-        pulseStartColor: '#000000',
-        pulseEndColor: '#000000',
+        pulseColor: '#000000',
         pulsePingPong: false,
       },
     ],
@@ -455,8 +452,7 @@ function renderSdfPulseFrame(
       return;
     }
 
-    const pulseStartColor = parseHexColor(config.pulseStartColor);
-    const pulseEndColor = parseHexColor(config.pulseEndColor);
+    const pulseColor = parseHexColor(config.pulseColor);
 
     for (let index = 0; index < pulsePositions.length; index += 1) {
       const t = pulsePositions[index];
@@ -464,7 +460,6 @@ function renderSdfPulseFrame(
 
       if (pulseAmount > 0) {
         const pixelIndex = pulsePixels[index];
-        const pulseColor = lerpColor(pulseStartColor, pulseEndColor, 1 - pulseAmount);
         image.pixels[pixelIndex] = pulseColor[0];
         image.pixels[pixelIndex + 1] = pulseColor[1];
         image.pixels[pixelIndex + 2] = pulseColor[2];
