@@ -320,7 +320,7 @@ function renderSdfPasses(
   let image: p5.Image | null = null;
 
   config.passes.forEach((pass) => {
-    if (!pass.enabled) {
+    if (!pass.enabled || pass.spread <= 0) {
       return;
     }
 
@@ -523,7 +523,7 @@ export function P5Home({ items, onNavigate }: P5HomeProps) {
           spread
           <input
             max="1600"
-            min="20"
+            min="0"
             onChange={(event) => updatePass(index, { spread: Number(event.target.value) })}
             step="10"
             type="range"
