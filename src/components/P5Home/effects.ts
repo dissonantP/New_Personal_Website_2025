@@ -22,6 +22,11 @@ type SdfPassConfig = {
   firstLineColor: string;
   firstLineColorWidth: number;
   firstLineColorStart: number;
+  bandColor: string;
+  bandCenter: number;
+  bandWidth: number;
+  bandCenterAmt: number;
+  bandCenterSpeed: number;
   pulseWidth: number;
   pulseSpeed: number;
   pulseInterval: number;
@@ -72,17 +77,22 @@ const sdfPresets = {
         cutoffMax: 1,
         noiseAmplitude: 80,
         noiseFrequency: 0.027,
-        startColor: '#333333',
-        endColor: '#333333',
-        gradientPow: 1,
-        firstLineColor: '#009900',
+        startColor: '#111111',
+        endColor: '#FFFFFF',
+        gradientPow: 2,
+        firstLineColor: '#000000',
         firstLineColorWidth: 0.08,
         firstLineColorStart: 0,
-        pulseWidth: 0.02,
-        pulseSpeed: 0.2,
-        pulseInterval: 4,
-        pulseStart: 0,
-        pulseColor: '#009900',
+        bandColor: '#888888',
+        bandCenter: 0.2,
+        bandWidth: 0.02,
+        bandCenterAmt: 0.0,
+        bandCenterSpeed: 0.5,
+        pulseWidth: 0.03,
+        pulseSpeed: 0.6,
+        pulseInterval: 4.0,
+        pulseStart: 0.2,
+        pulseColor: '#444444',
         pulsePingPong: false,
       },
       {
@@ -104,6 +114,11 @@ const sdfPresets = {
         firstLineColor: '#ffffff',
         firstLineColorWidth: 0,
         firstLineColorStart: 0,
+        bandColor: '#ffffff',
+        bandCenter: 0,
+        bandWidth: 0,
+        bandCenterAmt: 0,
+        bandCenterSpeed: 0,
         pulseWidth: 0,
         pulseSpeed: 0,
         pulseInterval: 2,
@@ -159,6 +174,22 @@ function samplePulseAmount(t: number, elapsedSeconds: number, config: SdfPassCon
   return 1 - distanceFromCenter / halfWidth;
 }
 
+function hasAnimatedBand(config: SdfPassConfig) {
+  return config.bandWidth > 0 && config.bandCenterAmt > 0 && config.bandCenterSpeed > 0;
+}
+
+function sampleBandCenter(config: SdfPassConfig, elapsedSeconds: number) {
+  if (!hasAnimatedBand(config)) {
+    return config.bandCenter;
+  }
+
+  return clamp(
+    0,
+    config.bandCenter + Math.sin(elapsedSeconds * config.bandCenterSpeed * Math.PI * 2) * config.bandCenterAmt,
+    1,
+  );
+}
+
 function parseHexColor(color: string): [number, number, number] {
   const normalized = color.replace('#', '');
 
@@ -200,10 +231,21 @@ function sampleLineColor(
   firstLineColor: [number, number, number],
   firstLineColorStart: number,
   firstLineColorWidth: number,
+  bandColor: [number, number, number],
+  bandCenter: number,
+  bandWidth: number,
   gradientPow: number,
 ) {
   if (firstLineColorWidth > 0 && t >= firstLineColorStart && t <= firstLineColorStart + firstLineColorWidth) {
     return firstLineColor;
+  }
+
+  if (bandWidth > 0) {
+    const halfBandWidth = bandWidth / 2;
+
+    if (t >= bandCenter - halfBandWidth && t <= bandCenter + halfBandWidth) {
+      return bandColor;
+    }
   }
 
   return lerpColor(startColor, endColor, sampleGradientT(t, gradientPow));
@@ -318,6 +360,7 @@ function renderSdfLinePass(field: SdfField, p: p5, config: SdfPassConfig) {
   const startColor = parseHexColor(config.startColor);
   const endColor = parseHexColor(config.endColor);
   const firstLineColor = parseHexColor(config.firstLineColor);
+  const bandColor = parseHexColor(config.bandColor);
 
   image.loadPixels();
 
@@ -361,6 +404,9 @@ function renderSdfLinePass(field: SdfField, p: p5, config: SdfPassConfig) {
         firstLineColor,
         config.firstLineColorStart,
         config.firstLineColorWidth,
+        bandColor,
+        config.bandCenter,
+        config.bandWidth,
         config.gradientPow,
       );
       image.pixels[pixelIndex] = config.showLines && thresholdBand > 0 ? lineColor[0] : value;
@@ -413,7 +459,7 @@ function buildSdfPassPipeline(
     }
 
     const field = createDistanceField(image ?? source, pass.seedThreshold, sourceScale);
-    const nextPass = renderSdfLinePass(field, p, pass);
+    const nextPass = renderSdfLinePass(field, p, hasAnimatedBand(pass) ? { ...pass, bandWidth: 0 } : pass);
 
     pipeline.push({ config: pass, ...nextPass });
     image = image ? compositeMax(image, nextPass.image, p) : nextPass.image;
@@ -448,6 +494,27 @@ function renderSdfPulseFrame(
   }
 
   pipeline.forEach(({ config, pulsePixels, pulsePositions }) => {
+    if (!hasAnimatedBand(config)) {
+      return;
+    }
+
+    const bandCenter = sampleBandCenter(config, elapsedSeconds);
+    const bandColor = parseHexColor(config.bandColor);
+    const halfBandWidth = config.bandWidth / 2;
+
+    for (let index = 0; index < pulsePositions.length; index += 1) {
+      const t = pulsePositions[index];
+
+      if (t >= bandCenter - halfBandWidth && t <= bandCenter + halfBandWidth) {
+        const pixelIndex = pulsePixels[index];
+        image.pixels[pixelIndex] = bandColor[0];
+        image.pixels[pixelIndex + 1] = bandColor[1];
+        image.pixels[pixelIndex + 2] = bandColor[2];
+      }
+    }
+  });
+
+  pipeline.forEach(({ config, pulsePixels, pulsePositions }) => {
     if (config.pulseWidth <= 0 || config.pulseSpeed <= 0 || config.pulseInterval <= 0) {
       return;
     }
@@ -474,7 +541,11 @@ function renderSdfPulseFrame(
 
 function hasPulseAnimation(config: SdfConfig) {
   return config.passes.some((pass) => {
-    return pass.enabled && pass.showLines && pass.pulseWidth > 0 && pass.pulseSpeed > 0;
+    return (
+      pass.enabled &&
+      pass.showLines &&
+      ((pass.pulseWidth > 0 && pass.pulseSpeed > 0 && pass.pulseInterval > 0) || hasAnimatedBand(pass))
+    );
   });
 }
 

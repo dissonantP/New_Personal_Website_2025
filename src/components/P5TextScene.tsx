@@ -16,6 +16,7 @@ export function P5TextScene<TContent>({ getContent, createSketch }: P5TextSceneP
   useEffect(() => {
     let initTimer: number | null = null;
     let cancelled = false;
+    const fontReady = document.fonts?.ready ?? Promise.resolve();
 
     function startSketch() {
       if (cancelled || sketchRef.current) {
@@ -37,7 +38,9 @@ export function P5TextScene<TContent>({ getContent, createSketch }: P5TextSceneP
       sketchRef.current = new p5(sketch);
     }
 
-    startSketch();
+    void fontReady.then(() => {
+      startSketch();
+    });
 
     return () => {
       cancelled = true;

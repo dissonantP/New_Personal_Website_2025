@@ -83,7 +83,7 @@ const HOME_BLOCKS: TextSceneBlockSpec<HomeItemId>[] = [
 
       return {
         x: screenCenterX - 100,
-        y: portfolio.y + 150,
+        y: portfolio.y + 170,
       };
     },
   },
