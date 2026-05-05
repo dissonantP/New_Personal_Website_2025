@@ -2,11 +2,11 @@ import { P5TextScenePage } from '../components/P5TextScenePage';
 import type { TextSceneBlockSpec } from '../components/P5TextScene/types';
 import { clamp } from '../components/P5TextScene/utils';
 
-type ServicesSectionProps = {
+type PortfolioSectionProps = {
   onBack: () => void;
 };
 
-const SERVICES_BLOCKS: TextSceneBlockSpec<'home'>[] = [
+const PORTFOLIO_BLOCKS: TextSceneBlockSpec<'home'>[] = [
   {
     id: 'back',
     lines: ['home'],
@@ -22,7 +22,7 @@ const SERVICES_BLOCKS: TextSceneBlockSpec<'home'>[] = [
   },
   {
     id: 'title',
-    lines: ['Services'],
+    lines: ['Portfolio'],
     interactive: false,
     style: { fontSize: 0, align: 'center', fill: '#f4f1ea', fontWeight: 900 },
     fontSize: (width) => clamp(28, width * 0.052, 46),
@@ -35,9 +35,10 @@ const SERVICES_BLOCKS: TextSceneBlockSpec<'home'>[] = [
   {
     id: 'body',
     lines: [
-      'Software design and implementation.',
-      'Creative technology prototypes and interactive systems.',
-      'Media-facing technical work, tooling, and production support.',
+      'I wrote my first lines of code in 2013 after finishing a Politics degree.',
+      'I learned through free curricula and structured courses, then moved into',
+      'startup backends, analytics systems, 3D tooling, and production CAD work.',
+      'Backend: Ruby on Rails. Frontend: TypeScript and React.',
     ],
     interactive: false,
     style: { fontSize: 0, align: 'left', fill: '#f4f1ea', fontWeight: 700 },
@@ -54,6 +55,6 @@ const SERVICES_BLOCKS: TextSceneBlockSpec<'home'>[] = [
   },
 ];
 
-export function ServicesSection({ onBack }: ServicesSectionProps) {
-  return <P5TextScenePage blocks={SERVICES_BLOCKS} onNavigate={onBack} />;
+export function PortfolioSection({ onBack }: PortfolioSectionProps) {
+  return <P5TextScenePage blocks={PORTFOLIO_BLOCKS} onNavigate={onBack} />;
 }

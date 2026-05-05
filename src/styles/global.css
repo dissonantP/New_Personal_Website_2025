@@ -222,6 +222,14 @@ a {
   overflow: auto;
 }
 
+.scene-intro {
+  width: 100vw;
+  min-height: 100vh;
+  padding: 0;
+  justify-items: stretch;
+  align-content: stretch;
+}
+
 .small-header {
   margin: 0 0 18px;
   color: #c63f2d;

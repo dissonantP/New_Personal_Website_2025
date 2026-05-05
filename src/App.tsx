@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Box } from './components/Box';
 import { P5Home } from './components/P5Home';
+import { PortfolioSection } from './sections/PortfolioSection';
 import { ServicesSection } from './sections/ServicesSection';
-import { SoftwareSection } from './sections/SoftwareSection';
 
 type SectionId = 'home' | 'portfolio' | 'services';
 
@@ -34,7 +34,7 @@ export function App() {
   function renderSection() {
     switch (section) {
       case 'portfolio':
-        return <SoftwareSection onBack={() => navigate('home')} title="Portfolio" />;
+        return <PortfolioSection onBack={() => navigate('home')} />;
       case 'services':
         return <ServicesSection onBack={() => navigate('home')} />;
       default:
@@ -45,7 +45,7 @@ export function App() {
   return (
     <main className="app-shell">
       <Box
-        className={`intro ${section === 'home' ? 'home-intro' : 'page-intro'} ${
+        className={`intro ${section === 'home' ? 'home-intro' : 'scene-intro'} ${
           isFading ? 'intro-fading' : ''
         }`}
       >

@@ -1,6 +1,7 @@
 import p5 from 'p5';
 
 import type { HomeTextContent } from './types';
+import type { TextSceneContent } from '../P5TextScene/types';
 import type { TextSceneEffects } from '../P5TextScene/types';
 
 type PulsePingPongMode = 'linear' | 'sine';
@@ -630,9 +631,9 @@ function hasPulseAnimation(config: SdfConfig) {
   });
 }
 
-export function createHomeEffects(
+export function createTextSceneEffects<TContent extends TextSceneContent<string>>(
   config: SdfConfig = defaultSdfConfig,
-): TextSceneEffects<HomeTextContent, HomeEffectState> {
+): TextSceneEffects<TContent, HomeEffectState> {
   return {
     build({ p, mask }) {
       const scale = config.resolutionScale;
@@ -674,4 +675,10 @@ export function createHomeEffects(
       return renderSdfPulseFrame(state.pipeline, state.baseImage, p, elapsedSeconds);
     },
   };
+}
+
+export function createHomeEffects(
+  config: SdfConfig = defaultSdfConfig,
+): TextSceneEffects<HomeTextContent, HomeEffectState> {
+  return createTextSceneEffects<HomeTextContent>(config);
 }
