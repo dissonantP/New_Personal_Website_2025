@@ -67,27 +67,64 @@ export function createTextSceneSketch<
       let content: TContent | null = null;
       let layout: TContent['blocks'] = [];
       let canvasElement: HTMLCanvasElement | null = null;
+      let currentPostprocess = {
+        scale: 1,
+        translateX: 0,
+        translateY: 0,
+      };
 
       function sizeCanvas(host: HTMLDivElement) {
-        const postprocess = getRenderPostprocess(host);
+        currentPostprocess = getRenderPostprocess(host);
+        const renderWidth = Math.max(1, Math.round(host.clientWidth / currentPostprocess.scale));
+        const renderHeight = Math.max(1, Math.round(host.clientHeight / currentPostprocess.scale));
 
-        p.resizeCanvas(host.clientWidth, host.clientHeight);
+        p.resizeCanvas(renderWidth, renderHeight);
         if (canvasElement) {
           canvasElement.style.width = `${host.clientWidth}px`;
           canvasElement.style.height = `${host.clientHeight}px`;
-          canvasElement.style.transform = `translate(${postprocess.translateX}px, ${postprocess.translateY}px) scale(${postprocess.scale})`;
+          canvasElement.style.position = 'absolute';
+          canvasElement.style.left = `calc(50% + ${currentPostprocess.translateX}px)`;
+          canvasElement.style.top = `calc(50% + ${currentPostprocess.translateY}px)`;
+          canvasElement.style.transform = `translate(-50%, -50%) scale(${currentPostprocess.scale})`;
           canvasElement.style.transformOrigin = 'center center';
         }
       }
 
+      function getPointerPosition() {
+        const host = getHostElement();
+
+        if (!host) {
+          return {
+            x: p.mouseX,
+            y: p.mouseY,
+          };
+        }
+
+        const renderWidth = Math.max(1, Math.round(host.clientWidth / currentPostprocess.scale));
+        const renderHeight = Math.max(1, Math.round(host.clientHeight / currentPostprocess.scale));
+
+        return {
+          x:
+            (p.mouseX - host.clientWidth / 2 - currentPostprocess.translateX) /
+              currentPostprocess.scale +
+            renderWidth / 2,
+          y:
+            (p.mouseY - host.clientHeight / 2 - currentPostprocess.translateY) /
+              currentPostprocess.scale +
+            renderHeight / 2,
+        };
+      }
+
       function getInteractiveBlock() {
+        const pointer = getPointerPosition();
+
         return layout.find((block) => {
           return (
             block.interactive &&
-            p.mouseX >= block.x &&
-            p.mouseX <= block.x + block.width &&
-            p.mouseY >= block.y &&
-            p.mouseY <= block.y + block.height
+            pointer.x >= block.x &&
+            pointer.x <= block.x + block.width &&
+            pointer.y >= block.y &&
+            pointer.y <= block.y + block.height
           );
         });
       }
@@ -164,13 +201,19 @@ export function createTextSceneSketch<
           return;
         }
 
-        const postprocess = getRenderPostprocess(mountPoint);
-        const canvas = p.createCanvas(mountPoint.clientWidth, mountPoint.clientHeight);
+        currentPostprocess = getRenderPostprocess(mountPoint);
+        const canvas = p.createCanvas(
+          Math.max(1, Math.round(mountPoint.clientWidth / currentPostprocess.scale)),
+          Math.max(1, Math.round(mountPoint.clientHeight / currentPostprocess.scale)),
+        );
         canvasElement = canvas.elt as HTMLCanvasElement;
         canvas.parent(mountPoint);
         canvasElement.style.width = `${mountPoint.clientWidth}px`;
         canvasElement.style.height = `${mountPoint.clientHeight}px`;
-        canvasElement.style.transform = `translate(${postprocess.translateX}px, ${postprocess.translateY}px) scale(${postprocess.scale})`;
+        canvasElement.style.position = 'absolute';
+        canvasElement.style.left = `calc(50% + ${currentPostprocess.translateX}px)`;
+        canvasElement.style.top = `calc(50% + ${currentPostprocess.translateY}px)`;
+        canvasElement.style.transform = `translate(-50%, -50%) scale(${currentPostprocess.scale})`;
         canvasElement.style.transformOrigin = 'center center';
         canvas.elt.addEventListener('mouseleave', () => {
           hoveredBlockId = null;

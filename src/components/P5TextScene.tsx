@@ -15,10 +15,10 @@ type P5TextSceneProps<TContent> = {
 };
 
 const RENDER_POSTPROCESS = {
-  mobileBreakpoint: 1000,
-  mobileScale: 0.8,
+  mobileBreakpoint: 500,
+  mobileScale: 0.7,
   mobileTranslateX: 0,
-  mobileTranslateY: 0,
+  mobileTranslateY: 30,
 };
 
 export function P5TextScene<TContent>({ getContent, createSketch }: P5TextSceneProps<TContent>) {
