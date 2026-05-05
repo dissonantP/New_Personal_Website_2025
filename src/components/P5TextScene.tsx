@@ -6,12 +6,36 @@ type P5TextSceneProps<TContent> = {
   createSketch: (args: {
     getHostElement: () => HTMLDivElement | null;
     getContent: (p: p5, width: number, height: number) => TContent;
+    getRenderPostprocess: (host: HTMLDivElement) => {
+      scale: number;
+      translateX: number;
+      translateY: number;
+    };
   }) => (p: p5) => void;
+};
+
+const RENDER_POSTPROCESS = {
+  mobileBreakpoint: 1000,
+  mobileScale: 0.8,
+  mobileTranslateX: 0,
+  mobileTranslateY: 0,
 };
 
 export function P5TextScene<TContent>({ getContent, createSketch }: P5TextSceneProps<TContent>) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const sketchRef = useRef<p5 | null>(null);
+
+  function getRenderPostprocess(host: HTMLDivElement) {
+    if (host.clientWidth < RENDER_POSTPROCESS.mobileBreakpoint) {
+      return {
+        scale: RENDER_POSTPROCESS.mobileScale,
+        translateX: RENDER_POSTPROCESS.mobileTranslateX,
+        translateY: RENDER_POSTPROCESS.mobileTranslateY,
+      };
+    }
+
+    return { scale: 1, translateX: 0, translateY: 0 };
+  }
 
   useEffect(() => {
     let initTimer: number | null = null;
@@ -33,6 +57,7 @@ export function P5TextScene<TContent>({ getContent, createSketch }: P5TextSceneP
       const sketch = createSketch({
         getHostElement: () => hostRef.current,
         getContent,
+        getRenderPostprocess,
       });
 
       sketchRef.current = new p5(sketch);

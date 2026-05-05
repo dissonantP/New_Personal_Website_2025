@@ -82,19 +82,19 @@ const sdfPresets = {
         cutoffMax: 0.2,
         noiseAmplitude: 80,
         noiseFrequency: 0.027,
-        startColor: '#FFFFFF',
-        endColor: '#FFFFFF',
+        startColor: '#CCCCCC',
+        endColor: '#CCCCCC',
         gradientPow: 2,
         firstLineColor: '#000000',
         firstLineColorWidth: 0.08,
         firstLineColorStart: 0,
-        bandColor: '#000000',
-        bandCenter: 0.2,
-        bandWidth: 0.00,
+        bandColor: '#FFFFFF',
+        bandCenter: 0.18,
+        bandWidth: 0.03,
         bandCenterAmt: 0.0,
         bandCenterSpeed: 0.5,
-        pulseWidth: 0.02,
-        pulseSpeed: 0.03,
+        pulseWidth: 0.04,
+        pulseSpeed: 0.05,
         // pulseInterval: 20.0,
         pulseInterval: 0,
         pulseStart: 0.08,
@@ -103,7 +103,7 @@ const sdfPresets = {
         pulsePingPong: true,
         // pulsePingPongMode: 'sine',
         pulsePingPongMode: 'linear',
-        pulseBlackInterior: true,
+        pulseBlackInterior: false,
       },
       {
         enabled: false,
@@ -214,7 +214,7 @@ function samplePulseAmountForCenters(t: number, pulseCenters: number[], config: 
     const distanceFromCenter = Math.abs(t - pulseCenter);
 
     if (distanceFromCenter <= halfWidth) {
-      amount = Math.max(amount, 1 - distanceFromCenter / halfWidth);
+      amount = Math.max(amount, 1 - smoothstep(0, halfWidth, distanceFromCenter));
     }
   });
 
@@ -602,9 +602,15 @@ function renderSdfPulseFrame(
 
       if (pulseAmount > 0) {
         const pixelIndex = pulsePixels[index];
-        image.pixels[pixelIndex] = pulseColor[0];
-        image.pixels[pixelIndex + 1] = pulseColor[1];
-        image.pixels[pixelIndex + 2] = pulseColor[2];
+        image.pixels[pixelIndex] = Math.round(
+          image.pixels[pixelIndex] * (1 - pulseAmount) + pulseColor[0] * pulseAmount,
+        );
+        image.pixels[pixelIndex + 1] = Math.round(
+          image.pixels[pixelIndex + 1] * (1 - pulseAmount) + pulseColor[1] * pulseAmount,
+        );
+        image.pixels[pixelIndex + 2] = Math.round(
+          image.pixels[pixelIndex + 2] * (1 - pulseAmount) + pulseColor[2] * pulseAmount,
+        );
       }
     }
   });

@@ -47,9 +47,15 @@ export function createTextSceneSketch<
 
   return ({
     getHostElement,
+    getRenderPostprocess,
     getContent,
   }: {
     getHostElement: () => HTMLDivElement | null;
+    getRenderPostprocess: (host: HTMLDivElement) => {
+      scale: number;
+      translateX: number;
+      translateY: number;
+    };
     getContent: (p: p5, width: number, height: number) => TContent;
   }) => {
     return (p: p5) => {
@@ -60,6 +66,19 @@ export function createTextSceneSketch<
       let resizeTimer: number | null = null;
       let content: TContent | null = null;
       let layout: TContent['blocks'] = [];
+      let canvasElement: HTMLCanvasElement | null = null;
+
+      function sizeCanvas(host: HTMLDivElement) {
+        const postprocess = getRenderPostprocess(host);
+
+        p.resizeCanvas(host.clientWidth, host.clientHeight);
+        if (canvasElement) {
+          canvasElement.style.width = `${host.clientWidth}px`;
+          canvasElement.style.height = `${host.clientHeight}px`;
+          canvasElement.style.transform = `translate(${postprocess.translateX}px, ${postprocess.translateY}px) scale(${postprocess.scale})`;
+          canvasElement.style.transformOrigin = 'center center';
+        }
+      }
 
       function getInteractiveBlock() {
         return layout.find((block) => {
@@ -145,8 +164,14 @@ export function createTextSceneSketch<
           return;
         }
 
+        const postprocess = getRenderPostprocess(mountPoint);
         const canvas = p.createCanvas(mountPoint.clientWidth, mountPoint.clientHeight);
+        canvasElement = canvas.elt as HTMLCanvasElement;
         canvas.parent(mountPoint);
+        canvasElement.style.width = `${mountPoint.clientWidth}px`;
+        canvasElement.style.height = `${mountPoint.clientHeight}px`;
+        canvasElement.style.transform = `translate(${postprocess.translateX}px, ${postprocess.translateY}px) scale(${postprocess.scale})`;
+        canvasElement.style.transformOrigin = 'center center';
         canvas.elt.addEventListener('mouseleave', () => {
           hoveredBlockId = null;
           p.cursor(p.ARROW);
@@ -174,7 +199,7 @@ export function createTextSceneSketch<
           return;
         }
 
-        p.resizeCanvas(host.clientWidth, host.clientHeight);
+        sizeCanvas(host);
         renderScene();
         scheduleRebuild();
       };
