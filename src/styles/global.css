@@ -92,6 +92,7 @@ a {
   bottom: 12px;
   z-index: 5;
   display: grid;
+  /* display: none; */
   gap: 8px;
   width: min(280px, calc(100vw - 24px));
   max-height: calc(100vh - 24px);

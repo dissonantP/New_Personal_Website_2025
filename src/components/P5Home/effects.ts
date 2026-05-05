@@ -3,7 +3,9 @@ import p5 from 'p5';
 import type { HomeTextContent } from './types';
 import type { TextSceneEffects } from '../P5TextScene/types';
 
-type SdfPassConfig = {
+type PulsePingPongMode = 'linear' | 'sine';
+
+export type SdfPassConfig = {
   enabled: boolean;
   spread: number;
   seedThreshold: number;
@@ -31,11 +33,14 @@ type SdfPassConfig = {
   pulseSpeed: number;
   pulseInterval: number;
   pulseStart: number;
+  pulseMaxDistance: number;
   pulseColor: string;
   pulsePingPong: boolean;
+  pulsePingPongMode: PulsePingPongMode;
+  pulseBlackInterior: boolean;
 };
 
-type SdfConfig = {
+export type SdfConfig = {
   resolutionScale: number;
   passes: [SdfPassConfig, SdfPassConfig];
 };
@@ -73,27 +78,32 @@ const sdfPresets = {
         invert: false,
         lineModulo: 48,
         lineThickness: 0.11,
-        cutoffMin: 0.06,
-        cutoffMax: 1,
+        cutoffMin: -0.00,
+        cutoffMax: 0.2,
         noiseAmplitude: 80,
         noiseFrequency: 0.027,
-        startColor: '#111111',
+        startColor: '#FFFFFF',
         endColor: '#FFFFFF',
         gradientPow: 2,
         firstLineColor: '#000000',
         firstLineColorWidth: 0.08,
         firstLineColorStart: 0,
-        bandColor: '#888888',
+        bandColor: '#000000',
         bandCenter: 0.2,
-        bandWidth: 0.02,
+        bandWidth: 0.00,
         bandCenterAmt: 0.0,
         bandCenterSpeed: 0.5,
-        pulseWidth: 0.03,
-        pulseSpeed: 0.6,
-        pulseInterval: 4.0,
-        pulseStart: 0.2,
-        pulseColor: '#444444',
-        pulsePingPong: false,
+        pulseWidth: 0.02,
+        pulseSpeed: 0.03,
+        // pulseInterval: 20.0,
+        pulseInterval: 0,
+        pulseStart: 0.08,
+        pulseMaxDistance: 0.1,
+        pulseColor: '#FFFFFF',
+        pulsePingPong: true,
+        // pulsePingPongMode: 'sine',
+        pulsePingPongMode: 'linear',
+        pulseBlackInterior: true,
       },
       {
         enabled: false,
@@ -123,14 +133,17 @@ const sdfPresets = {
         pulseSpeed: 0,
         pulseInterval: 2,
         pulseStart: 0,
-        pulseColor: '#000000',
+        pulseMaxDistance: 0,
+        pulseColor: '#00FF00',
         pulsePingPong: false,
+        pulsePingPongMode: 'linear',
+        pulseBlackInterior: false,
       },
     ],
   },
 } satisfies Record<string, SdfConfig>;
 
-const defaultSdfConfig: SdfConfig = sdfPresets.noisyLineField;
+export const defaultSdfConfig: SdfConfig = sdfPresets.noisyLineField;
 
 function clamp(min: number, value: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -150,28 +163,62 @@ function sampleFalloff(value: number) {
   return 1 - smoothstep(0, 1, value);
 }
 
-function samplePulseAmount(t: number, elapsedSeconds: number, config: SdfPassConfig) {
-  if (config.pulseWidth <= 0 || config.pulseSpeed <= 0 || config.pulseInterval <= 0) {
-    return 0;
+function samplePulseCenters(config: SdfPassConfig, elapsedSeconds: number) {
+  if (config.pulseWidth <= 0 || config.pulseSpeed <= 0) {
+    return [] as number[];
   }
 
-  const pulseProgress = (elapsedSeconds % config.pulseInterval) * config.pulseSpeed;
-  const pulseCenter = config.pulsePingPong
-    ? config.pulseStart + (1 - config.pulseStart) * (1 - Math.abs(1 - (pulseProgress % 2)))
-    : config.pulseStart + pulseProgress;
+  if (config.pulsePingPong) {
+    const maxDistance = config.pulseMaxDistance > 0 ? config.pulseMaxDistance : 1 - config.pulseStart;
+    const motion =
+      config.pulsePingPongMode === 'linear'
+        ? (() => {
+            const phase = (elapsedSeconds * config.pulseSpeed) % 2;
+            return phase <= 1 ? phase : 2 - phase;
+          })()
+        : (1 - Math.cos(elapsedSeconds * config.pulseSpeed * Math.PI * 2)) / 2;
 
-  if (pulseCenter > 1 + config.pulseWidth) {
-    return 0;
+    return [
+      clamp(0, config.pulseStart + motion * maxDistance, 1),
+    ];
   }
 
-  const distanceFromCenter = Math.abs(t - pulseCenter);
+  if (config.pulseInterval <= 0) {
+    return [];
+  }
+
+  const maxDistance = config.pulseMaxDistance > 0 ? config.pulseMaxDistance : 1 - config.pulseStart;
+  const pulseLifetime = maxDistance / config.pulseSpeed;
+  const pulseCount = Math.floor(elapsedSeconds / config.pulseInterval) + 1;
+  const centers: number[] = [];
+
+  for (let index = 0; index < pulseCount; index += 1) {
+    const startTime = index * config.pulseInterval;
+    const age = elapsedSeconds - startTime;
+
+    if (age < 0 || age > pulseLifetime) {
+      continue;
+    }
+
+    centers.push(clamp(0, config.pulseStart + age * config.pulseSpeed, 1));
+  }
+
+  return centers;
+}
+
+function samplePulseAmountForCenters(t: number, pulseCenters: number[], config: SdfPassConfig) {
   const halfWidth = config.pulseWidth / 2;
+  let amount = 0;
 
-  if (distanceFromCenter > halfWidth) {
-    return 0;
-  }
+  pulseCenters.forEach((pulseCenter) => {
+    const distanceFromCenter = Math.abs(t - pulseCenter);
 
-  return 1 - distanceFromCenter / halfWidth;
+    if (distanceFromCenter <= halfWidth) {
+      amount = Math.max(amount, 1 - distanceFromCenter / halfWidth);
+    }
+  });
+
+  return amount;
 }
 
 function hasAnimatedBand(config: SdfPassConfig) {
@@ -392,7 +439,7 @@ function renderSdfLinePass(field: SdfField, p: p5, config: SdfPassConfig) {
       const output = config.showLines ? line : brightness;
       const value = Math.round((config.invert && !config.thresholdLines ? 1 - output : output) * 255);
 
-      if (config.showLines && thresholdBand > 0) {
+      if (withinLineCutoff) {
         pulsePixelList.push(pixelIndex);
         pulsePositionList.push(t);
       }
@@ -515,15 +562,43 @@ function renderSdfPulseFrame(
   });
 
   pipeline.forEach(({ config, pulsePixels, pulsePositions }) => {
-    if (config.pulseWidth <= 0 || config.pulseSpeed <= 0 || config.pulseInterval <= 0) {
+    if (config.pulseWidth <= 0 || config.pulseSpeed <= 0) {
+      return;
+    }
+
+    if (!config.pulsePingPong && config.pulseInterval <= 0) {
+      return;
+    }
+
+    const pulseCenters = samplePulseCenters(config, elapsedSeconds);
+
+    if (pulseCenters.length === 0) {
       return;
     }
 
     const pulseColor = parseHexColor(config.pulseColor);
+    const black = [0, 0, 0] as const;
+    const firstLineStart = config.firstLineColorStart;
+    const firstLineEnd = config.firstLineColorStart + config.firstLineColorWidth;
+
+    if (config.pulseBlackInterior) {
+      pulseCenters.forEach((pulseCenter) => {
+        for (let index = 0; index < pulsePositions.length; index += 1) {
+          const t = pulsePositions[index];
+
+          if (t < pulseCenter && (config.firstLineColorWidth <= 0 || t < firstLineStart || t > firstLineEnd)) {
+            const pixelIndex = pulsePixels[index];
+            image.pixels[pixelIndex] = black[0];
+            image.pixels[pixelIndex + 1] = black[1];
+            image.pixels[pixelIndex + 2] = black[2];
+          }
+        }
+      });
+    }
 
     for (let index = 0; index < pulsePositions.length; index += 1) {
       const t = pulsePositions[index];
-      const pulseAmount = samplePulseAmount(t, elapsedSeconds, config);
+      const pulseAmount = samplePulseAmountForCenters(t, pulseCenters, config);
 
       if (pulseAmount > 0) {
         const pixelIndex = pulsePixels[index];
@@ -544,7 +619,7 @@ function hasPulseAnimation(config: SdfConfig) {
     return (
       pass.enabled &&
       pass.showLines &&
-      ((pass.pulseWidth > 0 && pass.pulseSpeed > 0 && pass.pulseInterval > 0) || hasAnimatedBand(pass))
+      ((pass.pulseWidth > 0 && pass.pulseSpeed > 0 && (pass.pulsePingPong || pass.pulseInterval > 0)) || hasAnimatedBand(pass))
     );
   });
 }
