@@ -10,29 +10,19 @@ type PortfolioSectionProps = {
 const PORTFOLIO_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
   {
     id: 'back',
-    lines: ['home'],
+    lines: [
+      { text: 'back', href: '../'},
+      { text: '\nPortfolio' }
+    ],
     interactive: true,
     targets: ['home'],
-    style: { fontSize: 0, align: 'left', fill: '#20c05c', hoverFill: '#39e476', fontWeight: 700 },
+    style: { fontSize: 0, align: 'center', fill: '#FFFFFF', linkFill: '#39e476', fontWeight: 700 },
     fontSize: (width) => clamp(16, width * 0.028, 22),
     lineGap: (fontSize) => fontSize * 0.35,
-    mobile: { fontSizeMultiplier: 0.9, yOffset: 12 },
+    mobile: { fontSizeMultiplier: 1.2, yOffset: -10, xOffset: -20 },
     layout: ({ screenCenterX, screenCenterY }) => ({
-      x: screenCenterX - 120,
+      x: screenCenterX - -10,
       y: screenCenterY - 490,
-    }),
-  },
-  {
-    id: 'title',
-    lines: ['Portfolio'],
-    interactive: false,
-    style: { fontSize: 0, align: 'center', fill: '#f4f1ea', fontWeight: 900 },
-    fontSize: (width) => clamp(28, width * 0.052, 46),
-    lineGap: (fontSize) => fontSize * 0.15,
-    mobile: { fontSizeMultiplier: 0.88, yOffset: 14 },
-    layout: ({ screenCenterX, screenCenterY }) => ({
-      x: screenCenterX + 12,
-      y: screenCenterY - 290,
     }),
   },
   {
@@ -44,15 +34,55 @@ const PORTFOLIO_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
         openInNewTab: true,
       },
       {
-        text: '\nautomated concert listings\n',
+        text: 'scraped concert listings',
       },
       {
-        text: '\nbayareashows.org',
-        href: 'https://bayareashows.org',
+        text: '\nHoudini Tools',
+        href: 'https://loving-snowstorm-ec0.notion.site/houdini-tools?v=1b7832ab6c5a80ae8702000c474aabb1',
         openInNewTab: true,
       },
       {
-        text: '\n\nautomated concert listings\n',
+        text: 'for algorithmic art',
+      },
+      {
+        text: '\nTouch Designer Tools',
+        href: 'https://loving-snowstorm-ec0.notion.site/touch-designer?v=1b9832ab6c5a808b86d7000c0d3f5201',
+        openInNewTab: true,
+      },
+      {
+        text: 'for video fx',
+      },
+      {
+        text: '\nYoutube Channel',
+        href: 'https://www.youtube.com/playlist?list=PLYisF59Ati4weUgwgbpYaA3E4X71BKUA0',
+        openInNewTab: true,
+      },
+      {
+        text: 'creative tech tutorials',
+      },
+      {
+        text: '\n🎵 Half Rotten Goddess',
+        href: 'https://halfrottengoddess.bandcamp.com/',
+        openInNewTab: true,
+      },
+      {
+        text: 'Post-punk band',
+      },
+      {
+        text: '\n🎵 War of Knives',
+        href: 'https://warofknives.bandcamp.com/',
+        openInNewTab: true,
+      },
+      {
+        text: 'Metal band',
+      },
+      {
+        text: '\n🎵 Protean',
+        href: 'https://dissonant-protean.bandcamp.com/',
+        openInNewTab: true,
+      },
+      {
+        text: 'Solo Electopunk',
       },
     ],
     interactive: false,
@@ -66,13 +96,13 @@ const PORTFOLIO_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
     },
     fontSize: (width) => clamp(16, width * 0.028, 22),
     lineGap: (fontSize) => fontSize * 0.4,
-    mobile: { fontSizeMultiplier: 0.84, yOffset: 28 },
+    mobile: { fontSizeMultiplier: 1.3, xOffset: 10, yOffset: 100 },
     layout: ({ screenCenterX, previous }) => {
       const title = previous.title;
 
       return {
-        x: screenCenterX - 0,
-        y: (title?.y ?? 0) + 190,
+        x: screenCenterX - 10,
+        y: (title?.y ?? 0) + 400,
       };
     },
   },

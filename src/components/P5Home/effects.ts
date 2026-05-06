@@ -95,7 +95,7 @@ const sdfPresets = {
         bandCenterAmt: 0.0,
         bandCenterSpeed: 0.5,
         pulseWidth: 0.04,
-        pulseSpeed: 0.05,
+        pulseSpeed: 0.06,
         // pulseInterval: 20.0,
         pulseInterval: 0,
         pulseStart: 0.08,

@@ -17,21 +17,34 @@ export function measureTextSceneBlock<TTarget extends string>(
   p: p5 | p5.Graphics,
   lines: TextSceneLine<TTarget>[],
   fontSize: number,
+  lineGap: number,
 ) {
   p.textFont(FONT_STACK);
   p.textSize(fontSize);
 
   const lineHeight = fontSize * 0.95;
-  const width = Math.max(...lines.map((line) => p.textWidth(getTextSceneLineText(line))));
+  const width = Math.max(
+    0,
+    ...lines.flatMap((line) =>
+      getTextSceneLineFragments(line).map((fragment) => p.textWidth(fragment)),
+    ),
+  );
+  const height =
+    lines.reduce((total, line) => total + getTextSceneLineFragments(line).length * lineHeight, 0) +
+    lineGap * Math.max(0, lines.length - 1);
 
   return {
     width,
-    height: lineHeight * lines.length,
+    height,
   };
 }
 
 export function getTextSceneLineText<TTarget extends string>(line: TextSceneLine<TTarget>) {
   return typeof line === 'string' ? line : line.text;
+}
+
+export function getTextSceneLineFragments<TTarget extends string>(line: TextSceneLine<TTarget>) {
+  return getTextSceneLineText(line).split('\n');
 }
 
 export function getTextSceneLineTarget<TTarget extends string>(line: TextSceneLine<TTarget>) {

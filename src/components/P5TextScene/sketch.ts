@@ -4,15 +4,11 @@ import type { TextSceneBlock, TextSceneContent, TextSceneEffects } from './types
 import type { MouseGlitchPointer, MouseGlitchPostprocessConfig } from './postprocess';
 import { applyMouseGlitchPostprocess } from './postprocess';
 import {
+  getTextSceneLineFragments,
   getTextSceneLineHref,
   getTextSceneLineOpenInNewTab,
   getTextSceneLineTarget,
-  getTextSceneLineText,
 } from './utils';
-
-function clamp(min: number, value: number, max: number) {
-  return Math.min(Math.max(value, min), max);
-}
 
 function drawBlocks<TTarget extends string>(
   surface: p5 | p5.Graphics,
@@ -27,16 +23,18 @@ function drawBlocks<TTarget extends string>(
 
   blocks.forEach((block) => {
     const lineHeight = block.style.fontSize * 0.95;
-    const blockStep = lineHeight + block.lineGap;
     surface.textStyle(block.style.fontWeight === 400 ? 'normal' : 'bold');
     surface.textAlign(block.style.align, 'center');
     surface.textSize(block.style.fontSize);
+    let cursorY = block.y;
+
     block.lines.forEach((line, index) => {
       const lineTarget = getTextSceneLineTarget(line);
       const lineHref = getTextSceneLineHref(line);
       const isLinkLine = Boolean(lineTarget || lineHref);
       const isHoveredLine =
         hoveredLineKey?.blockId === block.id && hoveredLineKey.lineIndex === index;
+      const fragments = getTextSceneLineFragments(line);
       const fillColor = useMask
         ? '#ffffff'
         : isLinkLine
@@ -48,7 +46,10 @@ function drawBlocks<TTarget extends string>(
             : block.style.fill;
 
       surface.fill(fillColor);
-      surface.text(getTextSceneLineText(line), block.x, block.y + blockStep * index + lineHeight / 2);
+      fragments.forEach((fragment, fragmentIndex) => {
+        surface.text(fragment, block.x, cursorY + lineHeight / 2 + lineHeight * fragmentIndex);
+      });
+      cursorY += fragments.length * lineHeight + block.lineGap;
     });
   });
 }
@@ -182,7 +183,6 @@ export function createTextSceneSketch<
         pointer: { x: number; y: number },
       ) {
         const lineHeight = block.style.fontSize * 0.95;
-        const lineStep = lineHeight + block.lineGap;
         const blockLeft = block.style.align === 'center' ? block.x - block.width / 2 : block.x;
         const blockRight = blockLeft + block.width;
 
@@ -195,7 +195,21 @@ export function createTextSceneSketch<
           return null;
         }
 
-        return clamp(0, Math.floor((pointer.y - block.y) / lineStep), block.lines.length - 1);
+        let cursorY = block.y;
+
+        for (let index = 0; index < block.lines.length; index += 1) {
+          const fragments = getTextSceneLineFragments(block.lines[index]);
+          const lineTop = cursorY;
+          const lineBottom = cursorY + fragments.length * lineHeight;
+
+          if (pointer.y >= lineTop && pointer.y <= lineBottom) {
+            return index;
+          }
+
+          cursorY += fragments.length * lineHeight + block.lineGap;
+        }
+
+        return null;
       }
 
       function getInteractiveHit(pointer = getPointerPosition()) {

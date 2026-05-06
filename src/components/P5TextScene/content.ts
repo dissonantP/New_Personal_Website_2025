@@ -26,6 +26,7 @@ export function buildTextSceneContent<TTarget extends string>(args: {
         args.p,
         block.lines,
         fontSize,
+        lineGap,
       );
       const metrics = {
         width: baseMetrics.width,
