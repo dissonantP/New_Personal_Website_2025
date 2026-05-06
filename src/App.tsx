@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Box } from './components/Box';
 import { P5Home } from './components/P5Home';
+import { ArtSection } from './sections/ArtSection';
 import { PortfolioSection } from './sections/PortfolioSection';
+import { MusicSection } from './sections/MusicSection';
 import { ServicesSection } from './sections/ServicesSection';
-
-type SectionId = 'home' | 'portfolio' | 'services';
+import type { SiteSectionId } from './navigation/types';
 
 export function App() {
-  const [section, setSection] = useState<SectionId>('home');
+  const [section, setSection] = useState<SiteSectionId>('home');
   const [isFading, setIsFading] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
@@ -19,7 +20,7 @@ export function App() {
     };
   }, []);
 
-  function navigate(nextSection: SectionId) {
+  function navigate(nextSection: SiteSectionId) {
     if (nextSection === section) {
       return;
     }
@@ -34,9 +35,13 @@ export function App() {
   function renderSection() {
     switch (section) {
       case 'portfolio':
-        return <PortfolioSection onBack={() => navigate('home')} />;
+        return <PortfolioSection onNavigate={navigate} />;
       case 'services':
-        return <ServicesSection onBack={() => navigate('home')} />;
+        return <ServicesSection onNavigate={navigate} />;
+      case 'art':
+        return <ArtSection onBack={() => navigate('home')} />;
+      case 'music':
+        return <MusicSection onBack={() => navigate('home')} />;
       default:
         return null;
     }

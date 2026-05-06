@@ -1,6 +1,7 @@
 import p5 from 'p5';
 
 import type { TextSceneBlock, TextSceneContent, TextSceneEffects } from './types';
+import { getTextSceneLineTarget, getTextSceneLineText } from './utils';
 
 function clamp(min: number, value: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -11,6 +12,7 @@ function drawBlocks<TTarget extends string>(
   blocks: Array<TextSceneBlock<TTarget>>,
   fontFamily: string,
   hoveredBlockId: string | null,
+  hoveredLineKey: { blockId: string; lineIndex: number } | null,
   useMask: boolean,
 ) {
   surface.textFont(fontFamily);
@@ -19,18 +21,25 @@ function drawBlocks<TTarget extends string>(
   blocks.forEach((block) => {
     const lineHeight = block.style.fontSize * 0.95;
     const blockStep = lineHeight + block.lineGap;
-    const fillColor = useMask
-      ? '#ffffff'
-      : block.id === hoveredBlockId
-        ? block.style.hoverFill ?? block.style.fill
-        : block.style.fill;
-
-    surface.fill(fillColor);
     surface.textStyle(block.style.fontWeight === 400 ? 'normal' : 'bold');
     surface.textAlign(block.style.align, 'center');
     surface.textSize(block.style.fontSize);
     block.lines.forEach((line, index) => {
-      surface.text(line, block.x, block.y + blockStep * index + lineHeight / 2);
+      const lineTarget = getTextSceneLineTarget(line);
+      const isHoveredLine =
+        hoveredLineKey?.blockId === block.id && hoveredLineKey.lineIndex === index;
+      const fillColor = useMask
+        ? '#ffffff'
+        : lineTarget
+          ? isHoveredLine
+            ? block.style.linkHoverFill ?? block.style.hoverFill ?? block.style.fill
+            : block.style.linkFill ?? block.style.fill
+          : block.id === hoveredBlockId
+            ? block.style.hoverFill ?? block.style.fill
+            : block.style.fill;
+
+      surface.fill(fillColor);
+      surface.text(getTextSceneLineText(line), block.x, block.y + blockStep * index + lineHeight / 2);
     });
   });
 }
@@ -67,6 +76,7 @@ export function createTextSceneSketch<
       let content: TContent | null = null;
       let layout: TContent['blocks'] = [];
       let canvasElement: HTMLCanvasElement | null = null;
+      let hoveredLineKey: { blockId: string; lineIndex: number } | null = null;
       let currentPostprocess = {
         scale: 1,
         translateX: 0,
@@ -115,30 +125,57 @@ export function createTextSceneSketch<
         };
       }
 
-      function getInteractiveBlock() {
+      function getLineIndexForPointer(block: TContent['blocks'][number]) {
         const pointer = getPointerPosition();
+        const lineHeight = block.style.fontSize * 0.95;
+        const lineStep = lineHeight + block.lineGap;
 
-        return layout.find((block) => {
-          return (
-            block.interactive &&
-            pointer.x >= block.x &&
-            pointer.x <= block.x + block.width &&
-            pointer.y >= block.y &&
-            pointer.y <= block.y + block.height
-          );
-        });
+        if (
+          pointer.x < block.x ||
+          pointer.x > block.x + block.width ||
+          pointer.y < block.y ||
+          pointer.y > block.y + block.height
+        ) {
+          return null;
+        }
+
+        return clamp(0, Math.floor((pointer.y - block.y) / lineStep), block.lines.length - 1);
+      }
+
+      function getInteractiveHit() {
+        for (const block of layout) {
+          const lineIndex = getLineIndexForPointer(block);
+
+          if (lineIndex === null) {
+            continue;
+          }
+
+          const target = block.targets?.[lineIndex] ?? getTextSceneLineTarget(block.lines[lineIndex]);
+
+          if (target) {
+            return { block, target, lineIndex };
+          }
+        }
+
+        return null;
       }
 
       function updateHover() {
-        const block = getInteractiveBlock();
-        const nextHoveredBlockId = block ? block.id : null;
+        const hit = getInteractiveHit();
+        const nextHoveredBlockId = hit ? hit.block.id : null;
+        const nextHoveredLineKey = hit ? { blockId: hit.block.id, lineIndex: hit.lineIndex } : null;
 
-        if (nextHoveredBlockId !== hoveredBlockId) {
+        if (
+          nextHoveredBlockId !== hoveredBlockId ||
+          nextHoveredLineKey?.blockId !== hoveredLineKey?.blockId ||
+          nextHoveredLineKey?.lineIndex !== hoveredLineKey?.lineIndex
+        ) {
           hoveredBlockId = nextHoveredBlockId;
+          hoveredLineKey = nextHoveredLineKey;
           renderScene();
         }
 
-        p.cursor(hoveredBlockId ? p.HAND : p.ARROW);
+        p.cursor(hit ? p.HAND : p.ARROW);
       }
 
       function renderScene() {
@@ -155,7 +192,7 @@ export function createTextSceneSketch<
           p.image(renderedImage, 0, 0, p.width, p.height);
         }
 
-        drawBlocks(p, layout, content.fontFamily, hoveredBlockId, false);
+        drawBlocks(p, layout, content.fontFamily, hoveredBlockId, hoveredLineKey, false);
       }
 
       function rebuildEffect() {
@@ -165,7 +202,7 @@ export function createTextSceneSketch<
         const mask = p.createGraphics(p.width, p.height);
         mask.pixelDensity(1);
         mask.background('#000000');
-        drawBlocks(mask, layout, content.fontFamily, null, true);
+        drawBlocks(mask, layout, content.fontFamily, null, null, true);
 
         effectRuntime = effects.build({
           p,
@@ -217,6 +254,7 @@ export function createTextSceneSketch<
         canvasElement.style.transformOrigin = 'center center';
         canvas.elt.addEventListener('mouseleave', () => {
           hoveredBlockId = null;
+          hoveredLineKey = null;
           p.cursor(p.ARROW);
           renderScene();
         });
@@ -252,21 +290,10 @@ export function createTextSceneSketch<
       };
 
       p.mouseClicked = () => {
-        const block = getInteractiveBlock();
+        const hit = getInteractiveHit();
 
-        if (block && block.targets) {
-          const lineHeight = block.style.fontSize * 0.95;
-          const lineStep = lineHeight + block.lineGap;
-          const lineIndex = clamp(
-            0,
-            Math.floor((p.mouseY - block.y) / lineStep),
-            block.lines.length - 1,
-          );
-          const target = block.targets[lineIndex];
-
-          if (target) {
-            onNavigate(target);
-          }
+        if (hit) {
+          onNavigate(hit.target);
         }
       };
     };

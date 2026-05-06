@@ -18,7 +18,11 @@ export function buildTextSceneContent<TTarget extends string>(args: {
     blocks: args.blocks.map((block) => {
       const fontSize = block.fontSize(args.width);
       const lineGap = block.lineGap(fontSize);
-      const baseMetrics = measureTextSceneBlock(args.p, block.lines, fontSize);
+      const baseMetrics = measureTextSceneBlock(
+        args.p,
+        block.lines,
+        fontSize,
+      );
       const metrics = {
         width: baseMetrics.width,
         height: baseMetrics.height + lineGap * Math.max(0, block.lines.length - 1),

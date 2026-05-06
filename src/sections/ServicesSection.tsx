@@ -1,12 +1,13 @@
 import { P5TextScenePage } from '../components/P5TextScenePage';
 import type { TextSceneBlockSpec } from '../components/P5TextScene/types';
 import { clamp } from '../components/P5TextScene/utils';
+import type { SiteSectionId } from '../navigation/types';
 
 type ServicesSectionProps = {
-  onBack: () => void;
+  onNavigate: (id: SiteSectionId) => void;
 };
 
-const SERVICES_BLOCKS: TextSceneBlockSpec<'home'>[] = [
+const SERVICES_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
   {
     id: 'back',
     lines: ['home'],
@@ -54,6 +55,6 @@ const SERVICES_BLOCKS: TextSceneBlockSpec<'home'>[] = [
   },
 ];
 
-export function ServicesSection({ onBack }: ServicesSectionProps) {
-  return <P5TextScenePage blocks={SERVICES_BLOCKS} onNavigate={onBack} />;
+export function ServicesSection({ onNavigate }: ServicesSectionProps) {
+  return <P5TextScenePage blocks={SERVICES_BLOCKS} onNavigate={onNavigate} />;
 }

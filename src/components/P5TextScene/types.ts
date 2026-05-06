@@ -5,12 +5,21 @@ export type TextSceneBlockStyle = {
   align: 'left' | 'center';
   fill: string;
   hoverFill?: string;
+  linkFill?: string;
+  linkHoverFill?: string;
   fontWeight?: 400 | 600 | 700 | 900;
 };
 
+export type TextSceneLine<TTarget extends string = string> =
+  | string
+  | {
+      text: string;
+      target?: TTarget;
+    };
+
 export type TextSceneBlock<TTarget extends string = string> = {
   id: string;
-  lines: string[];
+  lines: TextSceneLine<TTarget>[];
   x: number;
   y: number;
   width: number;
@@ -23,7 +32,7 @@ export type TextSceneBlock<TTarget extends string = string> = {
 
 export type TextSceneBlockSpec<TTarget extends string = string> = {
   id: string;
-  lines: string[];
+  lines: TextSceneLine<TTarget>[];
   interactive: boolean;
   targets?: TTarget[];
   style: TextSceneBlockStyle;
