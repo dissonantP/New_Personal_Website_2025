@@ -109,14 +109,11 @@ export function createTextSceneSketch<
 
       function getPointerPosition() {
         const host = getHostElement();
-        const touch = p.touches?.[0] as { x: number; y: number } | undefined;
-        const pointerX = touch?.x ?? p.mouseX;
-        const pointerY = touch?.y ?? p.mouseY;
 
         if (!host) {
           return {
-            x: pointerX,
-            y: pointerY,
+            x: p.mouseX,
+            y: p.mouseY,
           };
         }
 
@@ -125,18 +122,58 @@ export function createTextSceneSketch<
 
         return {
           x:
-            (pointerX - host.clientWidth / 2 - currentPostprocess.translateX) /
+            (p.mouseX - host.clientWidth / 2 - currentPostprocess.translateX) /
               currentPostprocess.scale +
             renderWidth / 2,
           y:
-            (pointerY - host.clientHeight / 2 - currentPostprocess.translateY) /
+            (p.mouseY - host.clientHeight / 2 - currentPostprocess.translateY) /
               currentPostprocess.scale +
             renderHeight / 2,
         };
       }
 
-      function getLineIndexForPointer(block: TContent['blocks'][number]) {
-        const pointer = getPointerPosition();
+      function getPointerPositionFromClient(clientX: number, clientY: number) {
+        const host = getHostElement();
+
+        if (!host) {
+          return {
+            x: clientX,
+            y: clientY,
+          };
+        }
+
+        const hostRect = host.getBoundingClientRect();
+        const localX = clientX - hostRect.left;
+        const localY = clientY - hostRect.top;
+        const renderWidth = Math.max(1, Math.round(host.clientWidth / currentPostprocess.scale));
+        const renderHeight = Math.max(1, Math.round(host.clientHeight / currentPostprocess.scale));
+
+        return {
+          x:
+            (localX - host.clientWidth / 2 - currentPostprocess.translateX) /
+              currentPostprocess.scale +
+            renderWidth / 2,
+          y:
+            (localY - host.clientHeight / 2 - currentPostprocess.translateY) /
+              currentPostprocess.scale +
+            renderHeight / 2,
+        };
+      }
+
+      function getPointerPositionFromTouchEvent(event?: TouchEvent) {
+        const touch = event?.changedTouches?.[0];
+
+        if (!touch) {
+          return getPointerPosition();
+        }
+
+        return getPointerPositionFromClient(touch.clientX, touch.clientY);
+      }
+
+      function getLineIndexForPointer(
+        block: TContent['blocks'][number],
+        pointer: { x: number; y: number },
+      ) {
         const lineHeight = block.style.fontSize * 0.95;
         const lineStep = lineHeight + block.lineGap;
 
@@ -152,9 +189,9 @@ export function createTextSceneSketch<
         return clamp(0, Math.floor((pointer.y - block.y) / lineStep), block.lines.length - 1);
       }
 
-      function getInteractiveHit() {
+      function getInteractiveHit(pointer = getPointerPosition()) {
         for (const block of layout) {
-          const lineIndex = getLineIndexForPointer(block);
+          const lineIndex = getLineIndexForPointer(block, pointer);
 
           if (lineIndex === null) {
             continue;
@@ -172,8 +209,8 @@ export function createTextSceneSketch<
         return null;
       }
 
-      function updateHover() {
-        const hit = getInteractiveHit();
+      function updateHover(pointer = getPointerPosition()) {
+        const hit = getInteractiveHit(pointer);
         const nextHoveredBlockId = hit ? hit.block.id : null;
         const nextHoveredLineKey = hit ? { blockId: hit.block.id, lineIndex: hit.lineIndex } : null;
 
@@ -264,6 +301,7 @@ export function createTextSceneSketch<
         canvasElement.style.top = `calc(50% + ${currentPostprocess.translateY}px)`;
         canvasElement.style.transform = `translate(-50%, -50%) scale(${currentPostprocess.scale})`;
         canvasElement.style.transformOrigin = 'center center';
+        canvasElement.style.touchAction = 'manipulation';
         canvas.elt.addEventListener('mouseleave', () => {
           hoveredBlockId = null;
           hoveredLineKey = null;
@@ -301,8 +339,8 @@ export function createTextSceneSketch<
         updateHover();
       };
 
-      function activateHit() {
-        const hit = getInteractiveHit();
+      function activateHit(pointer = getPointerPosition()) {
+        const hit = getInteractiveHit(pointer);
 
         if (hit) {
           if (hit.href) {
@@ -326,18 +364,20 @@ export function createTextSceneSketch<
         activateHit();
       };
 
-      (p as typeof p & { touchStarted: () => boolean }).touchStarted = () => {
-        updateHover();
+      (p as typeof p & { touchStarted: (event?: TouchEvent) => boolean }).touchStarted = (
+        event,
+      ) => {
+        updateHover(event ? getPointerPositionFromTouchEvent(event) : getPointerPosition());
         return false;
       };
 
-      (p as typeof p & { touchMoved: () => boolean }).touchMoved = () => {
-        updateHover();
+      (p as typeof p & { touchMoved: (event?: TouchEvent) => boolean }).touchMoved = (event) => {
+        updateHover(event ? getPointerPositionFromTouchEvent(event) : getPointerPosition());
         return false;
       };
 
-      (p as typeof p & { touchEnded: () => boolean }).touchEnded = () => {
-        activateHit();
+      (p as typeof p & { touchEnded: (event?: TouchEvent) => boolean }).touchEnded = (event) => {
+        activateHit(event ? getPointerPositionFromTouchEvent(event) : getPointerPosition());
         return false;
       };
     };
