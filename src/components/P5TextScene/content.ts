@@ -43,7 +43,7 @@ export function buildTextSceneContent<TTarget extends string>(args: {
       const layout = {
         ...blockWithoutMobile,
         ...metrics,
-        x: position.x,
+        x: position.x + (isMobile ? block.mobile?.xOffset ?? 0 : 0),
         y: position.y + (isMobile ? block.mobile?.yOffset ?? 0 : 0),
         style: {
           ...block.style,

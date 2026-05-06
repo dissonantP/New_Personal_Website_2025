@@ -43,6 +43,7 @@ export type TextSceneBlockSpec<TTarget extends string = string> = {
   mobile?: {
     breakpoint?: number;
     fontSizeMultiplier?: number;
+    xOffset?: number;
     yOffset?: number;
   };
   layout: (args: {
