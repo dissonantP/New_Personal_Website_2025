@@ -1,6 +1,8 @@
 import p5 from 'p5';
 
 import type { TextSceneBlock, TextSceneContent, TextSceneEffects } from './types';
+import type { MouseGlitchPointer, MouseGlitchPostprocessConfig } from './postprocess';
+import { applyMouseGlitchPostprocess } from './postprocess';
 import {
   getTextSceneLineHref,
   getTextSceneLineOpenInNewTab,
@@ -58,8 +60,9 @@ export function createTextSceneSketch<
 >(options: {
   effects: TextSceneEffects<TContent, TState>;
   onNavigate: (id: TTarget) => void;
+  postprocess?: MouseGlitchPostprocessConfig | null;
 }) {
-  const { effects, onNavigate } = options;
+  const { effects, onNavigate, postprocess } = options;
 
   return ({
     getHostElement,
@@ -79,11 +82,13 @@ export function createTextSceneSketch<
       let effectRuntime: { baseImage: p5.Image | null; state: TState; animate: boolean } | null =
         null;
       let renderedImage: p5.Image | null = null;
+      let sceneBuffer: p5.Graphics | null = null;
       let resizeTimer: number | null = null;
       let content: TContent | null = null;
       let layout: TContent['blocks'] = [];
       let canvasElement: HTMLCanvasElement | null = null;
       let hoveredLineKey: { blockId: string; lineIndex: number } | null = null;
+      let currentPointer: MouseGlitchPointer = null;
       let currentPostprocess = {
         scale: 1,
         translateX: 0,
@@ -160,6 +165,18 @@ export function createTextSceneSketch<
         };
       }
 
+      function ensureSceneBuffer() {
+        if (sceneBuffer && sceneBuffer.width === p.width && sceneBuffer.height === p.height) {
+          return sceneBuffer;
+        }
+
+        sceneBuffer?.remove();
+        sceneBuffer = p.createGraphics(p.width, p.height);
+        sceneBuffer.pixelDensity(1);
+
+        return sceneBuffer;
+      }
+
       function getLineIndexForPointer(
         block: TContent['blocks'][number],
         pointer: { x: number; y: number },
@@ -213,7 +230,6 @@ export function createTextSceneSketch<
         ) {
           hoveredBlockId = nextHoveredBlockId;
           hoveredLineKey = nextHoveredLineKey;
-          renderScene();
         }
 
         p.cursor(hit ? p.HAND : p.ARROW);
@@ -227,13 +243,22 @@ export function createTextSceneSketch<
         content = getContent(p, p.width, p.height);
         layout = content.blocks;
 
-        p.background(content.background);
+        const scene = ensureSceneBuffer();
+        scene.background(content.background);
 
         if (renderedImage) {
-          p.image(renderedImage, 0, 0, p.width, p.height);
+          scene.image(renderedImage, 0, 0, p.width, p.height);
         }
 
-        drawBlocks(p, layout, content.fontFamily, hoveredBlockId, hoveredLineKey, false);
+        drawBlocks(scene, layout, content.fontFamily, hoveredBlockId, hoveredLineKey, false);
+
+        const finalImage =
+          postprocess?.enabled && currentPointer
+            ? applyMouseGlitchPostprocess(scene, p, currentPointer, p.millis() / 1000, postprocess)
+            : scene;
+
+        p.background(content.background);
+        p.image(finalImage, 0, 0, p.width, p.height);
       }
 
       function rebuildEffect() {
@@ -295,7 +320,9 @@ export function createTextSceneSketch<
         canvasElement.style.transformOrigin = 'center center';
         canvasElement.style.touchAction = 'manipulation';
         canvasElement.addEventListener('pointermove', (event: PointerEvent) => {
-          updateHoverFromClient(event.clientX, event.clientY);
+          currentPointer = getPointerPositionFromClient(event.clientX, event.clientY);
+          updateHover(currentPointer);
+          renderScene();
         });
         canvasElement.addEventListener('pointerup', (event: PointerEvent) => {
           activateHitFromClient(event.clientX, event.clientY);
@@ -306,6 +333,7 @@ export function createTextSceneSketch<
         canvas.elt.addEventListener('mouseleave', () => {
           hoveredBlockId = null;
           hoveredLineKey = null;
+          currentPointer = null;
           p.cursor(p.ARROW);
           renderScene();
         });
@@ -335,14 +363,6 @@ export function createTextSceneSketch<
         renderScene();
         scheduleRebuild();
       };
-
-      p.mouseMoved = () => {
-        updateHover();
-      };
-
-      function updateHoverFromClient(clientX: number, clientY: number) {
-        updateHover(getPointerPositionFromClient(clientX, clientY));
-      }
 
       function activateHitFromClient(clientX: number, clientY: number) {
         activateHit(getPointerPositionFromClient(clientX, clientY));
