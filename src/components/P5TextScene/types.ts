@@ -40,6 +40,11 @@ export type TextSceneBlockSpec<TTarget extends string = string> = {
   style: TextSceneBlockStyle;
   fontSize: (width: number) => number;
   lineGap: (fontSize: number) => number;
+  mobile?: {
+    breakpoint?: number;
+    fontSizeMultiplier?: number;
+    yOffset?: number;
+  };
   layout: (args: {
     width: number;
     height: number;

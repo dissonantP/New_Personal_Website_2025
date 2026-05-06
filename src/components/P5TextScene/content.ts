@@ -16,7 +16,11 @@ export function buildTextSceneContent<TTarget extends string>(args: {
     background: args.background,
     fontFamily: getTextSceneFontStack(),
     blocks: args.blocks.map((block) => {
-      const fontSize = block.fontSize(args.width);
+      const blockWithoutMobile = { ...block };
+      delete blockWithoutMobile.mobile;
+      const isMobile = args.width < (block.mobile?.breakpoint ?? 1000);
+      const mobileFontSizeMultiplier = isMobile ? block.mobile?.fontSizeMultiplier ?? 1 : 1;
+      const fontSize = block.fontSize(args.width) * mobileFontSizeMultiplier;
       const lineGap = block.lineGap(fontSize);
       const baseMetrics = measureTextSceneBlock(
         args.p,
@@ -37,9 +41,10 @@ export function buildTextSceneContent<TTarget extends string>(args: {
         previous,
       });
       const layout = {
-        ...block,
+        ...blockWithoutMobile,
         ...metrics,
-        ...position,
+        x: position.x,
+        y: position.y + (isMobile ? block.mobile?.yOffset ?? 0 : 0),
         style: {
           ...block.style,
           fontSize,

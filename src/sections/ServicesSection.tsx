@@ -16,6 +16,7 @@ const SERVICES_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
     style: { fontSize: 0, align: 'left', fill: '#20c05c', hoverFill: '#39e476', fontWeight: 700 },
     fontSize: (width) => clamp(16, width * 0.028, 22),
     lineGap: (fontSize) => fontSize * 0.35,
+    mobile: { fontSizeMultiplier: 0.9, yOffset: 8 },
     layout: ({ screenCenterX, screenCenterY }) => ({
       x: screenCenterX - 260,
       y: screenCenterY - 320,
@@ -28,6 +29,7 @@ const SERVICES_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
     style: { fontSize: 0, align: 'center', fill: '#f4f1ea', fontWeight: 900 },
     fontSize: (width) => clamp(28, width * 0.052, 46),
     lineGap: (fontSize) => fontSize * 0.15,
+    mobile: { fontSizeMultiplier: 0.88, yOffset: 10 },
     layout: ({ screenCenterX, screenCenterY }) => ({
       x: screenCenterX + 12,
       y: screenCenterY - 290,
@@ -44,6 +46,7 @@ const SERVICES_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
     style: { fontSize: 0, align: 'left', fill: '#f4f1ea', fontWeight: 700 },
     fontSize: (width) => clamp(16, width * 0.028, 22),
     lineGap: (fontSize) => fontSize * 0.4,
+    mobile: { fontSizeMultiplier: 0.84, yOffset: 20 },
     layout: ({ screenCenterX, previous }) => {
       const title = previous.title;
 
