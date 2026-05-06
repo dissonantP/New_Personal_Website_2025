@@ -19,19 +19,24 @@ export function measureTextSceneBlock<TTarget extends string>(
   fontSize: number,
   lineGap: number,
 ) {
-  p.textFont(FONT_STACK);
-  p.textSize(fontSize);
+  let width = 0;
+  let height = 0;
 
-  const lineHeight = fontSize * 0.95;
-  const width = Math.max(
-    0,
-    ...lines.flatMap((line) =>
-      getTextSceneLineFragments(line).map((fragment) => p.textWidth(fragment)),
-    ),
-  );
-  const height =
-    lines.reduce((total, line) => total + getTextSceneLineFragments(line).length * lineHeight, 0) +
-    lineGap * Math.max(0, lines.length - 1);
+  lines.forEach((line) => {
+    const lineFontSize = getTextSceneLineFontSize(line, fontSize);
+    const lineHeight = lineFontSize * 0.95;
+
+    p.textFont(FONT_STACK);
+    p.textSize(lineFontSize);
+
+    getTextSceneLineFragments(line).forEach((fragment) => {
+      width = Math.max(width, p.textWidth(fragment));
+    });
+
+    height += getTextSceneLineFragments(line).length * lineHeight;
+  });
+
+  height += lineGap * Math.max(0, lines.length - 1);
 
   return {
     width,
@@ -57,6 +62,23 @@ export function getTextSceneLineHref<TTarget extends string>(line: TextSceneLine
 
 export function getTextSceneLineOpenInNewTab<TTarget extends string>(line: TextSceneLine<TTarget>) {
   return typeof line === 'string' ? false : Boolean(line.openInNewTab);
+}
+
+export function getTextSceneLineUnderline<TTarget extends string>(line: TextSceneLine<TTarget>) {
+  return typeof line === 'string' ? false : Boolean(line.underline);
+}
+
+export function getTextSceneLineUnderlineOffset<TTarget extends string>(
+  line: TextSceneLine<TTarget>,
+) {
+  return typeof line === 'string' ? 0 : line.underlineOffset ?? 0;
+}
+
+export function getTextSceneLineFontSize<TTarget extends string>(
+  line: TextSceneLine<TTarget>,
+  fallback: number,
+) {
+  return typeof line === 'string' ? fallback : line.fontSize ?? fallback;
 }
 
 export { clamp };

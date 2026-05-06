@@ -336,6 +336,30 @@ a {
   }
 }
 
+@media (max-height: 760px) {
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  #root {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .app-shell {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .home-intro,
+  .page-intro {
+    min-height: auto;
+  }
+}
+
 .page-header {
   display: flex;
   align-items: center;

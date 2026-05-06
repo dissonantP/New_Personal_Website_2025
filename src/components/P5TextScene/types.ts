@@ -17,6 +17,9 @@ export type TextSceneLine<TTarget extends string = string> =
       target?: TTarget;
       href?: string;
       openInNewTab?: boolean;
+      underline?: boolean;
+      underlineOffset?: number;
+      fontSize?: number;
     };
 
 export type TextSceneBlock<TTarget extends string = string> = {

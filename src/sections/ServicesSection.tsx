@@ -3,61 +3,79 @@ import type { TextSceneBlockSpec } from '../components/P5TextScene/types';
 import { clamp } from '../components/P5TextScene/utils';
 import type { SiteSectionId } from '../navigation/types';
 
-type ServicesSectionProps = {
+type ServivcesSectionProps = {
   onNavigate: (id: SiteSectionId) => void;
 };
+
+const fontSize = 18
 
 const SERVICES_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
   {
     id: 'back',
-    lines: ['home'],
+    lines: [
+      { text: 'back', href: '../'},
+      { text: 'Services' }
+    ],
     interactive: true,
     targets: ['home'],
-    style: { fontSize: 0, align: 'left', fill: '#20c05c', hoverFill: '#39e476', fontWeight: 700 },
+    style: { fontSize: 0, align: 'center', fill: '#FFFFFF', linkFill: '#39e476', fontWeight: 700 },
     fontSize: (width) => clamp(16, width * 0.028, 22),
     lineGap: (fontSize) => fontSize * 0.35,
-    mobile: { fontSizeMultiplier: 0.9, yOffset: 8 },
+    mobile: { fontSizeMultiplier: 1.2, yOffset: -0, xOffset: -20 },
     layout: ({ screenCenterX, screenCenterY }) => ({
-      x: screenCenterX - 260,
-      y: screenCenterY - 320,
-    }),
-  },
-  {
-    id: 'title',
-    lines: ['Services'],
-    interactive: false,
-    style: { fontSize: 0, align: 'center', fill: '#f4f1ea', fontWeight: 900 },
-    fontSize: (width) => clamp(28, width * 0.052, 46),
-    lineGap: (fontSize) => fontSize * 0.15,
-    mobile: { fontSizeMultiplier: 0.88, yOffset: 10 },
-    layout: ({ screenCenterX, screenCenterY }) => ({
-      x: screenCenterX + 12,
-      y: screenCenterY - 290,
+      x: screenCenterX - -10,
+      y: screenCenterY - 490,
     }),
   },
   {
     id: 'body',
     lines: [
-      'Software design and implementation.',
-      'Creative technology prototypes and interactive systems.',
-      'Media-facing technical work, tooling, and production support.',
+      { text: 'App Development', underline: true, underlineOffset: 10 },
+      { text: 'Full-stack web', fontSize },
+      { text: 'Self hosting', fontSize },
+      { text: 'Browser automation', fontSize },
+      { text: 'AI automation', fontSize },
+      { text: '13+ years experience', fontSize },
+
+      { text: '\n\n3D & Tech Art', underline: true, underlineOffset: 10 },
+      { text: 'Sketchup, Blender, Houdini', fontSize },
+      { text: 'Touch Designer, P5, PS', fontSize },
+      { text: 'Plugins, Pipelines', fontSize },
+      { text: 'Graphic Design', fontSize },
+      { text: 'Live Video Art', fontSize },
+
+      { text: '\n\nMusic', underline: true, underlineOffset: 10 },
+      { text: 'Ableton, VCV, ClyphX', fontSize },
+      { text: 'Drumming, Recording', fontSize },
+
+      { text: '\n\nPrinting & Craft', underline: true, underlineOffset: 10 },
+      { text: 'Stickers, Posters, Shirts', fontSize },
+      { text: 'FDM, Resin 3D Prints', fontSize },
+      { text: 'Flower arrangement', fontSize },
     ],
     interactive: false,
-    style: { fontSize: 0, align: 'left', fill: '#f4f1ea', fontWeight: 700 },
+    style: {
+      fontSize: 0,
+      align: 'center',
+      fill: '#f4f1ea',
+      linkFill: '#20c05c',
+      linkHoverFill: '#39e476',
+      fontWeight: 700,
+    },
     fontSize: (width) => clamp(16, width * 0.028, 22),
     lineGap: (fontSize) => fontSize * 0.4,
-    mobile: { fontSizeMultiplier: 0.84, yOffset: 20 },
+    mobile: { fontSizeMultiplier: 1.3, xOffset: 10, yOffset: 70 },
     layout: ({ screenCenterX, previous }) => {
       const title = previous.title;
 
       return {
-        x: screenCenterX - 100,
-        y: (title?.y ?? 0) + 170,
+        x: screenCenterX - 0,
+        y: (title?.y ?? 0) + 400,
       };
     },
   },
 ];
 
-export function ServicesSection({ onNavigate }: ServicesSectionProps) {
+export function ServicesSection({ onNavigate }: ServivcesSectionProps) {
   return <P5TextScenePage blocks={SERVICES_BLOCKS} onNavigate={onNavigate} />;
 }

@@ -5,8 +5,11 @@ import type { MouseGlitchPointer, MouseGlitchPostprocessConfig } from './postpro
 import { applyMouseGlitchPostprocess } from './postprocess';
 import {
   getTextSceneLineFragments,
+  getTextSceneLineFontSize,
   getTextSceneLineHref,
   getTextSceneLineOpenInNewTab,
+  getTextSceneLineUnderlineOffset,
+  getTextSceneLineUnderline,
   getTextSceneLineTarget,
 } from './utils';
 
@@ -22,15 +25,16 @@ function drawBlocks<TTarget extends string>(
   surface.noStroke();
 
   blocks.forEach((block) => {
-    const lineHeight = block.style.fontSize * 0.95;
     surface.textStyle(block.style.fontWeight === 400 ? 'normal' : 'bold');
     surface.textAlign(block.style.align, 'center');
-    surface.textSize(block.style.fontSize);
     let cursorY = block.y;
 
     block.lines.forEach((line, index) => {
+      const lineFontSize = getTextSceneLineFontSize(line, block.style.fontSize);
+      const lineHeight = lineFontSize * 0.95;
       const lineTarget = getTextSceneLineTarget(line);
       const lineHref = getTextSceneLineHref(line);
+      const lineUnderline = getTextSceneLineUnderline(line);
       const isLinkLine = Boolean(lineTarget || lineHref);
       const isHoveredLine =
         hoveredLineKey?.blockId === block.id && hoveredLineKey.lineIndex === index;
@@ -45,9 +49,24 @@ function drawBlocks<TTarget extends string>(
             ? block.style.hoverFill ?? block.style.fill
             : block.style.fill;
 
+      surface.textSize(lineFontSize);
       surface.fill(fillColor);
       fragments.forEach((fragment, fragmentIndex) => {
-        surface.text(fragment, block.x, cursorY + lineHeight / 2 + lineHeight * fragmentIndex);
+        const textY = cursorY + lineHeight / 2 + lineHeight * fragmentIndex;
+        surface.text(fragment, block.x, textY);
+
+        if (lineUnderline) {
+          const fragmentWidth = surface.textWidth(fragment);
+          const underlineY = textY + lineHeight * 0.1 + getTextSceneLineUnderlineOffset(line);
+          const underlineStart =
+            block.style.align === 'center' ? block.x - fragmentWidth / 2 : block.x;
+          const underlineEnd = underlineStart + fragmentWidth;
+
+          surface.stroke(fillColor);
+          surface.strokeWeight(Math.max(1, block.style.fontSize * 0.06));
+          surface.line(underlineStart, underlineY, underlineEnd, underlineY);
+          surface.noStroke();
+        }
       });
       cursorY += fragments.length * lineHeight + block.lineGap;
     });
@@ -182,7 +201,6 @@ export function createTextSceneSketch<
         block: TContent['blocks'][number],
         pointer: { x: number; y: number },
       ) {
-        const lineHeight = block.style.fontSize * 0.95;
         const blockLeft = block.style.align === 'center' ? block.x - block.width / 2 : block.x;
         const blockRight = blockLeft + block.width;
 
@@ -198,7 +216,10 @@ export function createTextSceneSketch<
         let cursorY = block.y;
 
         for (let index = 0; index < block.lines.length; index += 1) {
-          const fragments = getTextSceneLineFragments(block.lines[index]);
+          const line = block.lines[index];
+          const lineFontSize = getTextSceneLineFontSize(line, block.style.fontSize);
+          const lineHeight = lineFontSize * 0.95;
+          const fragments = getTextSceneLineFragments(line);
           const lineTop = cursorY;
           const lineBottom = cursorY + fragments.length * lineHeight;
 

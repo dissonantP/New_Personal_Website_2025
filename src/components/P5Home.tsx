@@ -2,7 +2,6 @@ import p5 from 'p5';
 import { useCallback, useMemo } from 'react';
 
 import { P5TextScene } from './P5TextScene';
-import { defaultMouseGlitchPostprocessConfig } from './P5TextScene/postprocess';
 import { createTextSceneSketch } from './P5TextScene/sketch';
 import { buildTextSceneContent } from './P5TextScene/content';
 import type { TextSceneBlockSpec } from './P5TextScene/types';
@@ -25,20 +24,6 @@ type HomeBlockSpec = TextSceneBlockSpec<HomeItemId> & {
 
 const HOME_MOBILE_BREAKPOINT = 1000000;
 const yOffset = -20;
-const HOME_GLITCH_POSTPROCESS = {
-  ...defaultMouseGlitchPostprocessConfig,
-  enabled: true,
-  radius: 170,
-  intensity: 14,
-  rgbSplit: 3,
-  colorMix: 0.3,
-  noiseScale: 0.04,
-  noiseSpeed: 0.95,
-  lineJitter: 10,
-  colorA: '#ffffff',
-  colorB: '#20c05c',
-  colorC: '#ff4de1',
-} satisfies typeof defaultMouseGlitchPostprocessConfig;
 
 function applyMobileOffset(
   width: number,
@@ -160,12 +145,7 @@ export function P5Home({ onNavigate }: P5HomeProps) {
   const effects = useMemo(() => createHomeEffects(), []);
   const navigate = useCallback((id: HomeItemId) => onNavigate(id), [onNavigate]);
   const createSketch = useMemo(
-    () =>
-      createTextSceneSketch({
-        effects,
-        onNavigate: navigate,
-        postprocess: HOME_GLITCH_POSTPROCESS,
-      }),
+    () => createTextSceneSketch({ effects, onNavigate: navigate }),
     [effects, navigate],
   );
 
