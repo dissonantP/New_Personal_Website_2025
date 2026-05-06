@@ -160,16 +160,6 @@ export function createTextSceneSketch<
         };
       }
 
-      function getPointerPositionFromTouchEvent(event?: TouchEvent) {
-        const touch = event?.changedTouches?.[0];
-
-        if (!touch) {
-          return getPointerPosition();
-        }
-
-        return getPointerPositionFromClient(touch.clientX, touch.clientY);
-      }
-
       function getLineIndexForPointer(
         block: TContent['blocks'][number],
         pointer: { x: number; y: number },
@@ -302,6 +292,15 @@ export function createTextSceneSketch<
         canvasElement.style.transform = `translate(-50%, -50%) scale(${currentPostprocess.scale})`;
         canvasElement.style.transformOrigin = 'center center';
         canvasElement.style.touchAction = 'manipulation';
+        canvasElement.addEventListener('pointermove', (event: PointerEvent) => {
+          updateHoverFromClient(event.clientX, event.clientY);
+        });
+        canvasElement.addEventListener('pointerup', (event: PointerEvent) => {
+          activateHitFromClient(event.clientX, event.clientY);
+        });
+        canvasElement.addEventListener('click', (event: MouseEvent) => {
+          activateHitFromClient(event.clientX, event.clientY);
+        });
         canvas.elt.addEventListener('mouseleave', () => {
           hoveredBlockId = null;
           hoveredLineKey = null;
@@ -339,6 +338,14 @@ export function createTextSceneSketch<
         updateHover();
       };
 
+      function updateHoverFromClient(clientX: number, clientY: number) {
+        updateHover(getPointerPositionFromClient(clientX, clientY));
+      }
+
+      function activateHitFromClient(clientX: number, clientY: number) {
+        activateHit(getPointerPositionFromClient(clientX, clientY));
+      }
+
       function activateHit(pointer = getPointerPosition()) {
         const hit = getInteractiveHit(pointer);
 
@@ -362,23 +369,6 @@ export function createTextSceneSketch<
 
       p.mouseClicked = () => {
         activateHit();
-      };
-
-      (p as typeof p & { touchStarted: (event?: TouchEvent) => boolean }).touchStarted = (
-        event,
-      ) => {
-        updateHover(event ? getPointerPositionFromTouchEvent(event) : getPointerPosition());
-        return false;
-      };
-
-      (p as typeof p & { touchMoved: (event?: TouchEvent) => boolean }).touchMoved = (event) => {
-        updateHover(event ? getPointerPositionFromTouchEvent(event) : getPointerPosition());
-        return false;
-      };
-
-      (p as typeof p & { touchEnded: (event?: TouchEvent) => boolean }).touchEnded = (event) => {
-        activateHit(event ? getPointerPositionFromTouchEvent(event) : getPointerPosition());
-        return false;
       };
     };
   };
