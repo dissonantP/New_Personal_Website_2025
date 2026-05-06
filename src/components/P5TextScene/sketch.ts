@@ -166,10 +166,12 @@ export function createTextSceneSketch<
       ) {
         const lineHeight = block.style.fontSize * 0.95;
         const lineStep = lineHeight + block.lineGap;
+        const blockLeft = block.style.align === 'center' ? block.x - block.width / 2 : block.x;
+        const blockRight = blockLeft + block.width;
 
         if (
-          pointer.x < block.x ||
-          pointer.x > block.x + block.width ||
+          pointer.x < blockLeft ||
+          pointer.x > blockRight ||
           pointer.y < block.y ||
           pointer.y > block.y + block.height
         ) {
@@ -367,9 +369,6 @@ export function createTextSceneSketch<
         }
       }
 
-      p.mouseClicked = () => {
-        activateHit();
-      };
     };
   };
 }
