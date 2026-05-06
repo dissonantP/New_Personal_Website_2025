@@ -109,11 +109,14 @@ export function createTextSceneSketch<
 
       function getPointerPosition() {
         const host = getHostElement();
+        const touch = p.touches?.[0] as { x: number; y: number } | undefined;
+        const pointerX = touch?.x ?? p.mouseX;
+        const pointerY = touch?.y ?? p.mouseY;
 
         if (!host) {
           return {
-            x: p.mouseX,
-            y: p.mouseY,
+            x: pointerX,
+            y: pointerY,
           };
         }
 
@@ -122,11 +125,11 @@ export function createTextSceneSketch<
 
         return {
           x:
-            (p.mouseX - host.clientWidth / 2 - currentPostprocess.translateX) /
+            (pointerX - host.clientWidth / 2 - currentPostprocess.translateX) /
               currentPostprocess.scale +
             renderWidth / 2,
           y:
-            (p.mouseY - host.clientHeight / 2 - currentPostprocess.translateY) /
+            (pointerY - host.clientHeight / 2 - currentPostprocess.translateY) /
               currentPostprocess.scale +
             renderHeight / 2,
         };
@@ -298,7 +301,7 @@ export function createTextSceneSketch<
         updateHover();
       };
 
-      p.mouseClicked = () => {
+      function activateHit() {
         const hit = getInteractiveHit();
 
         if (hit) {
@@ -317,6 +320,25 @@ export function createTextSceneSketch<
             onNavigate(hit.target);
           }
         }
+      }
+
+      p.mouseClicked = () => {
+        activateHit();
+      };
+
+      (p as typeof p & { touchStarted: () => boolean }).touchStarted = () => {
+        updateHover();
+        return false;
+      };
+
+      (p as typeof p & { touchMoved: () => boolean }).touchMoved = () => {
+        updateHover();
+        return false;
+      };
+
+      (p as typeof p & { touchEnded: () => boolean }).touchEnded = () => {
+        activateHit();
+        return false;
       };
     };
   };
