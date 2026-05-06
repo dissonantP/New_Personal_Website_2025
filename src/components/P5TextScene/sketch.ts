@@ -1,7 +1,12 @@
 import p5 from 'p5';
 
 import type { TextSceneBlock, TextSceneContent, TextSceneEffects } from './types';
-import { getTextSceneLineTarget, getTextSceneLineText } from './utils';
+import {
+  getTextSceneLineHref,
+  getTextSceneLineOpenInNewTab,
+  getTextSceneLineTarget,
+  getTextSceneLineText,
+} from './utils';
 
 function clamp(min: number, value: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -26,11 +31,13 @@ function drawBlocks<TTarget extends string>(
     surface.textSize(block.style.fontSize);
     block.lines.forEach((line, index) => {
       const lineTarget = getTextSceneLineTarget(line);
+      const lineHref = getTextSceneLineHref(line);
+      const isLinkLine = Boolean(lineTarget || lineHref);
       const isHoveredLine =
         hoveredLineKey?.blockId === block.id && hoveredLineKey.lineIndex === index;
       const fillColor = useMask
         ? '#ffffff'
-        : lineTarget
+        : isLinkLine
           ? isHoveredLine
             ? block.style.linkHoverFill ?? block.style.hoverFill ?? block.style.fill
             : block.style.linkFill ?? block.style.fill
@@ -150,10 +157,12 @@ export function createTextSceneSketch<
             continue;
           }
 
-          const target = block.targets?.[lineIndex] ?? getTextSceneLineTarget(block.lines[lineIndex]);
+          const line = block.lines[lineIndex];
+          const target = block.targets?.[lineIndex] ?? getTextSceneLineTarget(line);
+          const href = getTextSceneLineHref(line);
 
-          if (target) {
-            return { block, target, lineIndex };
+          if (target || href) {
+            return { block, target, href, lineIndex };
           }
         }
 
@@ -293,7 +302,20 @@ export function createTextSceneSketch<
         const hit = getInteractiveHit();
 
         if (hit) {
-          onNavigate(hit.target);
+          if (hit.href) {
+            const line = hit.block.lines[hit.lineIndex];
+
+            if (getTextSceneLineOpenInNewTab(line)) {
+              window.open(hit.href, '_blank', 'noopener,noreferrer');
+            } else {
+              window.location.href = hit.href;
+            }
+            return;
+          }
+
+          if (hit.target) {
+            onNavigate(hit.target);
+          }
         }
       };
     };

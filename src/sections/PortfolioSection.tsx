@@ -36,13 +36,11 @@ const PORTFOLIO_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
   {
     id: 'body',
     lines: [
-      'I wrote my first lines of code in 2013 after finishing a Politics degree.',
-      { text: 'software work', target: 'home' },
-      'I learned through free curricula and structured courses, then moved into',
-      { text: 'art systems', target: 'art' },
-      'startup backends, analytics systems, 3D tooling, and production CAD work.',
-      { text: 'music projects', target: 'music' },
-      'Backend: Ruby on Rails. Frontend: TypeScript and React.',
+      {
+        text: 'bayareashows.org (automated concert listings)',
+        href: 'https://bayareashows.org',
+        openInNewTab: true,
+      },
     ],
     interactive: false,
     style: {

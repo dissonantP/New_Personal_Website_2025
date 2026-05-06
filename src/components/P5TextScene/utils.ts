@@ -38,4 +38,12 @@ export function getTextSceneLineTarget<TTarget extends string>(line: TextSceneLi
   return typeof line === 'string' ? undefined : line.target;
 }
 
+export function getTextSceneLineHref<TTarget extends string>(line: TextSceneLine<TTarget>) {
+  return typeof line === 'string' ? undefined : line.href;
+}
+
+export function getTextSceneLineOpenInNewTab<TTarget extends string>(line: TextSceneLine<TTarget>) {
+  return typeof line === 'string' ? false : Boolean(line.openInNewTab);
+}
+
 export { clamp };

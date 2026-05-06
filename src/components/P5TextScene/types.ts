@@ -15,6 +15,8 @@ export type TextSceneLine<TTarget extends string = string> =
   | {
       text: string;
       target?: TTarget;
+      href?: string;
+      openInNewTab?: boolean;
     };
 
 export type TextSceneBlock<TTarget extends string = string> = {
