@@ -331,12 +331,6 @@ a {
 }
 
 @media (max-width: 640px) {
-  .home-intro {
-    --home-offset: clamp(18px, 8vw, 34px);
-  }
-}
-
-@media (max-height: 760px) {
   body {
     overflow-x: hidden;
     overflow-y: auto;
@@ -347,16 +341,32 @@ a {
   #root {
     height: auto;
     min-height: 100vh;
+    overflow: visible;
   }
 
   .app-shell {
     height: auto;
     min-height: 100vh;
+    overflow: visible;
   }
 
-  .home-intro,
+  .home-intro {
+    --home-offset: clamp(18px, 8vw, 34px);
+    min-height: 844px;
+  }
+
+  .scene-intro {
+    min-height: 844px;
+  }
+
+  .p5-home {
+    --mobile-scene-height: 944px;
+    height: var(--mobile-scene-height);
+    min-height: var(--mobile-scene-height);
+  }
+
   .page-intro {
-    min-height: auto;
+    min-height: 100vh;
   }
 }
 

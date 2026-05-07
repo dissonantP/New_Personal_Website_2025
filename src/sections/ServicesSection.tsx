@@ -21,7 +21,7 @@ const SERVICES_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
     style: { fontSize: 0, align: 'center', fill: '#FFFFFF', linkFill: '#39e476', fontWeight: 700 },
     fontSize: (width) => clamp(16, width * 0.028, 22),
     lineGap: (fontSize) => fontSize * 0.35,
-    mobile: { fontSizeMultiplier: 1.2, yOffset: -0, xOffset: -20 },
+    mobile: { fontSizeMultiplier: 1, yOffset: -10, xOffset: -20 },
     layout: ({ screenCenterX, screenCenterY }) => ({
       x: screenCenterX - -10,
       y: screenCenterY - 490,
@@ -64,7 +64,7 @@ const SERVICES_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
     },
     fontSize: (width) => clamp(16, width * 0.028, 22),
     lineGap: (fontSize) => fontSize * 0.4,
-    mobile: { fontSizeMultiplier: 1.3, xOffset: 10, yOffset: 70 },
+    mobile: { fontSizeMultiplier: 1, xOffset: 10, yOffset: 10 },
     layout: ({ screenCenterX, previous }) => {
       const title = previous.title;
 

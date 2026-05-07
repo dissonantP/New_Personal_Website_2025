@@ -19,7 +19,7 @@ const PORTFOLIO_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
     style: { fontSize: 0, align: 'center', fill: '#FFFFFF', linkFill: '#39e476', fontWeight: 700 },
     fontSize: (width) => clamp(16, width * 0.028, 22),
     lineGap: (fontSize) => fontSize * 0.35,
-    mobile: { fontSizeMultiplier: 1.2, yOffset: -10, xOffset: -20 },
+    mobile: { fontSizeMultiplier: 1, yOffset: -30, xOffset: -20 },
     layout: ({ screenCenterX, screenCenterY }) => ({
       x: screenCenterX - -10,
       y: screenCenterY - 490,
@@ -61,12 +61,20 @@ const PORTFOLIO_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
         text: 'creative tech tutorials',
       },
       {
+        text: '\nArt',
+        href: 'https://loving-snowstorm-ec0.notion.site/359832ab6c5a806e9b29cf01d856b96a?v=359832ab6c5a81de95c4000cf0133b64',
+        openInNewTab: true,
+      },
+      {
+        text: 'graphic design',
+      },
+      {
         text: '\n🎵 Half Rotten Goddess',
         href: 'https://halfrottengoddess.bandcamp.com/',
         openInNewTab: true,
       },
       {
-        text: 'Post-punk band',
+        text: 'post-punk band',
       },
       {
         text: '\n🎵 War of Knives',
@@ -74,7 +82,7 @@ const PORTFOLIO_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
         openInNewTab: true,
       },
       {
-        text: 'Metal band',
+        text: 'metal band',
       },
       {
         text: '\n🎵 Protean',
@@ -82,7 +90,7 @@ const PORTFOLIO_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
         openInNewTab: true,
       },
       {
-        text: 'Solo Electopunk',
+        text: 'solo electopunk',
       },
     ],
     interactive: false,
@@ -96,7 +104,7 @@ const PORTFOLIO_BLOCKS: TextSceneBlockSpec<SiteSectionId>[] = [
     },
     fontSize: (width) => clamp(16, width * 0.028, 22),
     lineGap: (fontSize) => fontSize * 0.4,
-    mobile: { fontSizeMultiplier: 1.3, xOffset: 10, yOffset: 100 },
+    mobile: { fontSizeMultiplier: 1, xOffset: 10, yOffset: 20 },
     layout: ({ screenCenterX, previous }) => {
       const title = previous.title;
 

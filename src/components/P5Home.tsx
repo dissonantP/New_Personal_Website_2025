@@ -22,7 +22,7 @@ type HomeBlockSpec = TextSceneBlockSpec<HomeItemId> & {
   mobileOffset?: HomeLayoutPoint;
 };
 
-const HOME_MOBILE_BREAKPOINT = 1000000;
+const HOME_MOBILE_BREAKPOINT = 1000;
 const yOffset = -20;
 
 function applyMobileOffset(
@@ -52,15 +52,25 @@ function defineHomeBlock(block: HomeBlockSpec): TextSceneBlockSpec<HomeItemId> {
 const HOME_BLOCK_SPECS = [
   {
     id: 'title',
-    lines: ['Max Pleaner'],
+    lines: [
+      'Max Pleaner',
+      { text: 'contact', href: 'mailto:maxpleaner@gmail.com', fontSize: 20 },
+    ],
     interactive: false,
-    style: { fontSize: 0, align: 'center', fill: '#f4f1ea', fontWeight: 900 },
+    style: {
+      fontSize: 0,
+      align: 'center',
+      fill: '#f4f1ea',
+      linkFill: '#20c05c',
+      linkHoverFill: '#39e476',
+      fontWeight: 900,
+    },
     fontSize: (width) => clamp(26, width * 0.05, 44),
     lineGap: (fontSize) => fontSize * 0.15,
-    mobileOffset: { x: 0, y: -150 },
+    mobileOffset: { x: 0, y: -200 },
     layout: ({ screenCenterX, screenCenterY }) => ({
       x: screenCenterX + 10,
-      y: screenCenterY + yOffset - 300,
+      y: screenCenterY + yOffset - 400,
     }),
   },
   {
@@ -77,7 +87,7 @@ const HOME_BLOCK_SPECS = [
 
       return {
         x: screenCenterX - 100,
-        y: titleY + 170,
+        y: titleY + 180,
       };
     },
   },
