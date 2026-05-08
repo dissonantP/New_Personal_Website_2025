@@ -34,19 +34,13 @@ export function App() {
       root.style.setProperty('--app-viewport-height', `${height}px`);
     }
 
-    function handleScrollDebug() {
-      window.alert('scroll event fired');
-    }
-
     updateViewportHeight();
     window.addEventListener('resize', updateViewportHeight);
     window.visualViewport?.addEventListener('resize', updateViewportHeight);
-    window.addEventListener('scroll', handleScrollDebug, { once: true });
 
     return () => {
       window.removeEventListener('resize', updateViewportHeight);
       window.visualViewport?.removeEventListener('resize', updateViewportHeight);
-      window.removeEventListener('scroll', handleScrollDebug);
     };
   }, []);
 

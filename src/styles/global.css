@@ -341,6 +341,10 @@ a {
 }
 
 @media (max-width: 999px) {
+  .app-shell {
+    padding-bottom: 240px;
+  }
+
   .home-intro {
     --home-offset: clamp(18px, 8vw, 34px);
     min-height: 844px;
