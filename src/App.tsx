@@ -37,12 +37,10 @@ export function App() {
     updateViewportHeight();
     window.addEventListener('resize', updateViewportHeight);
     window.visualViewport?.addEventListener('resize', updateViewportHeight);
-    window.visualViewport?.addEventListener('scroll', updateViewportHeight);
 
     return () => {
       window.removeEventListener('resize', updateViewportHeight);
       window.visualViewport?.removeEventListener('resize', updateViewportHeight);
-      window.visualViewport?.removeEventListener('scroll', updateViewportHeight);
     };
   }, []);
 
