@@ -27,6 +27,26 @@ export function App() {
   const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
+    const root = document.documentElement;
+
+    function updateViewportHeight() {
+      const height = Math.round(window.visualViewport?.height ?? window.innerHeight);
+      root.style.setProperty('--app-viewport-height', `${height}px`);
+    }
+
+    updateViewportHeight();
+    window.addEventListener('resize', updateViewportHeight);
+    window.visualViewport?.addEventListener('resize', updateViewportHeight);
+    window.visualViewport?.addEventListener('scroll', updateViewportHeight);
+
+    return () => {
+      window.removeEventListener('resize', updateViewportHeight);
+      window.visualViewport?.removeEventListener('resize', updateViewportHeight);
+      window.visualViewport?.removeEventListener('scroll', updateViewportHeight);
+    };
+  }, []);
+
+  useEffect(() => {
     function handlePopState() {
       setSection(getSectionFromPath(window.location.pathname));
       setIsFading(false);

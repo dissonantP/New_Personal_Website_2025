@@ -10,6 +10,13 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  width: 100%;
+  height: 100%;
+  min-height: var(--app-viewport-height, 100vh);
+  background: #111111;
+}
+
 @font-face {
   font-family: 'ErsiqustDemoRegular';
   src: url('/fonts/ErsiqustDemoRegular-ARv9p.ttf') format('truetype');
@@ -25,7 +32,7 @@ body {
   width: 100%;
   height: 100%;
   min-width: 320px;
-  min-height: 100vh;
+  min-height: var(--app-viewport-height, 100vh);
   background: #111111;
   overflow: hidden;
   position: relative;
@@ -43,7 +50,7 @@ body::before {
   top: 0;
   left: 50%;
   width: min(100vw, 1500px);
-  height: 100vh;
+  height: var(--app-viewport-height, 100vh);
   transform: translateX(-50%);
   box-shadow: 0 0 0 100vmax #000000;
   pointer-events: none;
@@ -57,7 +64,7 @@ a {
 .app-shell {
   display: grid;
   isolation: isolate;
-  min-height: 100vh;
+  min-height: var(--app-viewport-height, 100vh);
   padding: 0;
   background: #000000;
 }
@@ -77,8 +84,8 @@ a {
 .p5-home {
   position: relative;
   width: 100vw;
-  height: 100vh;
-  min-height: 100vh;
+  height: var(--app-viewport-height, 100vh);
+  min-height: var(--app-viewport-height, 100vh);
   overflow: hidden;
 }
 
@@ -331,22 +338,23 @@ a {
 }
 
 @media (max-width: 640px) {
+  html,
   body {
     overflow-x: hidden;
     overflow-y: auto;
     height: auto;
-    min-height: 100vh;
+    min-height: var(--app-viewport-height, 100vh);
   }
 
   #root {
     height: auto;
-    min-height: 100vh;
+    min-height: var(--app-viewport-height, 100vh);
     overflow: visible;
   }
 
   .app-shell {
     height: auto;
-    min-height: 100vh;
+    min-height: var(--app-viewport-height, 100vh);
     overflow: visible;
   }
 
@@ -366,7 +374,7 @@ a {
   }
 
   .page-intro {
-    min-height: 100vh;
+    min-height: var(--app-viewport-height, 100vh);
   }
 }
 

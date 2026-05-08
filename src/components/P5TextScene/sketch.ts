@@ -353,7 +353,7 @@ export function createTextSceneSketch<
         canvasElement.style.top = `calc(50% + ${currentPostprocess.translateY}px)`;
         canvasElement.style.transform = `translate(-50%, -50%) scale(${currentPostprocess.scale})`;
         canvasElement.style.transformOrigin = 'center center';
-        canvasElement.style.touchAction = 'manipulation';
+        canvasElement.style.touchAction = 'pan-y';
         canvasElement.addEventListener('pointermove', (event: PointerEvent) => {
           currentPointer = getPointerPositionFromClient(event.clientX, event.clientY);
           updateHover(currentPointer);
