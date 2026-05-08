@@ -34,8 +34,7 @@ body {
   min-width: 320px;
   min-height: var(--app-viewport-height, 100vh);
   background: #111111;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   position: relative;
 }
 
@@ -43,7 +42,10 @@ body {
   width: 100%;
   height: auto;
   min-height: var(--app-viewport-height, 100vh);
-  overflow: visible;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 body::before {
@@ -70,6 +72,7 @@ a {
   padding: 0;
   background: #000000;
   overflow: visible;
+  touch-action: pan-y;
 }
 
 .p5-backdrop {
@@ -90,10 +93,12 @@ a {
   height: var(--app-viewport-height, 100vh);
   min-height: var(--app-viewport-height, 100vh);
   overflow: hidden;
+  touch-action: pan-y;
 }
 
 .p5-home canvas {
   display: block;
+  touch-action: pan-y;
 }
 
 .sdf-dev-panel {
@@ -230,6 +235,8 @@ a {
   min-height: 100vh;
   padding: 32px 0;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
 .scene-intro {
