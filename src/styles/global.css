@@ -39,8 +39,10 @@ body {
 }
 
 #root {
+  position: fixed;
+  inset: 0;
   width: 100%;
-  height: auto;
+  height: var(--app-viewport-height, 100vh);
   min-height: var(--app-viewport-height, 100vh);
   overflow-x: hidden;
   overflow-y: auto;
@@ -68,7 +70,7 @@ a {
 .app-shell {
   display: grid;
   isolation: isolate;
-  min-height: var(--app-viewport-height, 100vh);
+  min-height: 100%;
   padding: 0;
   background: #000000;
   overflow: visible;
