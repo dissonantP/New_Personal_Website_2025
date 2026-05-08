@@ -12,7 +12,7 @@
 
 html {
   width: 100%;
-  height: 100%;
+  height: auto;
   min-height: var(--app-viewport-height, 100vh);
   background: #111111;
 }
@@ -30,18 +30,20 @@ html {
 body {
   margin: 0;
   width: 100%;
-  height: 100%;
+  height: auto;
   min-width: 320px;
   min-height: var(--app-viewport-height, 100vh);
   background: #111111;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   position: relative;
 }
 
 #root {
   width: 100%;
-  height: 100%;
-  overflow: hidden;
+  height: auto;
+  min-height: var(--app-viewport-height, 100vh);
+  overflow: visible;
 }
 
 body::before {
@@ -67,6 +69,7 @@ a {
   min-height: var(--app-viewport-height, 100vh);
   padding: 0;
   background: #000000;
+  overflow: visible;
 }
 
 .p5-backdrop {
@@ -338,26 +341,6 @@ a {
 }
 
 @media (max-width: 999px) {
-  html,
-  body {
-    overflow-x: hidden;
-    overflow-y: auto;
-    height: auto;
-    min-height: var(--app-viewport-height, 100vh);
-  }
-
-  #root {
-    height: auto;
-    min-height: var(--app-viewport-height, 100vh);
-    overflow: visible;
-  }
-
-  .app-shell {
-    height: auto;
-    min-height: var(--app-viewport-height, 100vh);
-    overflow: visible;
-  }
-
   .home-intro {
     --home-offset: clamp(18px, 8vw, 34px);
     min-height: 844px;
