@@ -13,6 +13,11 @@ type P5TextScenePageProps<TTarget extends string> = {
   onNavigate: (id: TTarget) => void;
   background?: string;
   postprocess?: MouseGlitchPostprocessConfig | null;
+  getRenderPostprocess?: (host: HTMLDivElement) => {
+    scale: number;
+    translateX: number;
+    translateY: number;
+  };
 };
 
 export function P5TextScenePage<TTarget extends string>({
@@ -20,6 +25,7 @@ export function P5TextScenePage<TTarget extends string>({
   onNavigate,
   background = '#FFFFFF',
   postprocess = null,
+  getRenderPostprocess,
 }: P5TextScenePageProps<TTarget>) {
   const getContent = useCallback(
     (p: p5, width: number, height: number) =>
@@ -42,5 +48,11 @@ export function P5TextScenePage<TTarget extends string>({
     [effects, onNavigate, postprocess],
   );
 
-  return <P5TextScene getContent={getContent} createSketch={createSketch} />;
+  return (
+    <P5TextScene
+      getContent={getContent}
+      createSketch={createSketch}
+      getRenderPostprocess={getRenderPostprocess}
+    />
+  );
 }

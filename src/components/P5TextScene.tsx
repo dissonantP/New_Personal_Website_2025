@@ -12,6 +12,11 @@ type P5TextSceneProps<TContent> = {
       translateY: number;
     };
   }) => (p: p5) => void;
+  getRenderPostprocess?: (host: HTMLDivElement) => {
+    scale: number;
+    translateX: number;
+    translateY: number;
+  };
 };
 
 const RENDER_POSTPROCESS = {
@@ -21,21 +26,25 @@ const RENDER_POSTPROCESS = {
   mobileTranslateY: 30,
 };
 
-export function P5TextScene<TContent>({ getContent, createSketch }: P5TextSceneProps<TContent>) {
+function defaultRenderPostprocess(host: HTMLDivElement) {
+  if (host.clientWidth < RENDER_POSTPROCESS.mobileBreakpoint) {
+    return {
+      scale: RENDER_POSTPROCESS.mobileScale,
+      translateX: RENDER_POSTPROCESS.mobileTranslateX,
+      translateY: RENDER_POSTPROCESS.mobileTranslateY,
+    };
+  }
+
+  return { scale: 1, translateX: 0, translateY: 0 };
+}
+
+export function P5TextScene<TContent>({
+  getContent,
+  createSketch,
+  getRenderPostprocess = defaultRenderPostprocess,
+}: P5TextSceneProps<TContent>) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const sketchRef = useRef<p5 | null>(null);
-
-  function getRenderPostprocess(host: HTMLDivElement) {
-    if (host.clientWidth < RENDER_POSTPROCESS.mobileBreakpoint) {
-      return {
-        scale: RENDER_POSTPROCESS.mobileScale,
-        translateX: RENDER_POSTPROCESS.mobileTranslateX,
-        translateY: RENDER_POSTPROCESS.mobileTranslateY,
-      };
-    }
-
-    return { scale: 1, translateX: 0, translateY: 0 };
-  }
 
   useEffect(() => {
     let initTimer: number | null = null;
@@ -75,7 +84,7 @@ export function P5TextScene<TContent>({ getContent, createSketch }: P5TextSceneP
       sketchRef.current?.remove();
       sketchRef.current = null;
     };
-  }, [createSketch, getContent]);
+  }, [createSketch, getContent, getRenderPostprocess]);
 
   return <div className="p5-home" ref={hostRef} />;
 }
