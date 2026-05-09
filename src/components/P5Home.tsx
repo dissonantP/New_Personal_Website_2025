@@ -67,7 +67,7 @@ const HOME_BLOCK_SPECS = [
     },
     fontSize: (width) => clamp(26, width * 0.05, 44),
     lineGap: (fontSize) => fontSize * 0.15,
-    mobileOffset: { x: 0, y: -200 },
+    mobileOffset: { x: 0, y: -100 },
     layout: ({ screenCenterX, screenCenterY }) => ({
       x: screenCenterX + 10,
       y: screenCenterY + yOffset - 400,
