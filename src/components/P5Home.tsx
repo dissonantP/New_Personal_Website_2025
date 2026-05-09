@@ -18,10 +18,6 @@ type HomeLayoutPoint = {
   y: number;
 };
 
-function getHomeRenderPostprocess() {
-  return { scale: 1, translateX: 0, translateY: 0 };
-}
-
 type HomeBlockSpec = TextSceneBlockSpec<HomeItemId> & {
   mobileOffset?: HomeLayoutPoint;
 };
@@ -167,7 +163,6 @@ export function P5Home({ onNavigate }: P5HomeProps) {
     <P5TextScene
       getContent={getContent}
       createSketch={createSketch}
-      getRenderPostprocess={getHomeRenderPostprocess}
     />
   );
 }
