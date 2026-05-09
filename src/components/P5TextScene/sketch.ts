@@ -129,6 +129,7 @@ export function createTextSceneSketch<
           canvasElement.style.top = `calc(50% + ${currentPostprocess.translateY}px)`;
           canvasElement.style.transform = `translate(-50%, -50%) scale(${currentPostprocess.scale})`;
           canvasElement.style.transformOrigin = 'center center';
+          canvasElement.style.touchAction = 'pan-y';
         }
       }
 
@@ -353,7 +354,6 @@ export function createTextSceneSketch<
         canvasElement.style.top = `calc(50% + ${currentPostprocess.translateY}px)`;
         canvasElement.style.transform = `translate(-50%, -50%) scale(${currentPostprocess.scale})`;
         canvasElement.style.transformOrigin = 'center center';
-        canvasElement.style.touchAction = 'pan-y';
         canvasElement.addEventListener('pointermove', (event: PointerEvent) => {
           currentPointer = getPointerPositionFromClient(event.clientX, event.clientY);
           updateHover(currentPointer);
@@ -372,6 +372,11 @@ export function createTextSceneSketch<
           p.cursor(p.ARROW);
           renderScene();
         });
+        window.setTimeout(() => {
+          if (canvasElement) {
+            canvasElement.style.touchAction = 'pan-y';
+          }
+        }, 0);
         p.pixelDensity(1);
         content = getContent(p, p.width, p.height);
         layout = content.blocks;
