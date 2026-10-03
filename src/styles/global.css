@@ -51,6 +51,14 @@ body,
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 0.85;
+  position: relative;
+  z-index: 0;
+  text-shadow:
+    10px 10px #1a37ff,
+    20px 20px #7d1dff,
+    30px 30px #d20d9a,
+    40px 40px #ff5a1f,
+    50px 50px #ffd229;
 }
 
 .home-section__links {
@@ -62,7 +70,9 @@ body,
   font-family: 'Bold Type', Arial, Helvetica, sans-serif;
   font-weight: 700;
   line-height: 0.95;
+  position: relative;
   text-align: center;
+  z-index: 1;
 }
 
 .link {
