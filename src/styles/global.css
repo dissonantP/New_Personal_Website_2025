@@ -10,7 +10,8 @@
 
 @font-face {
   font-family: 'BP Dots';
-  src: url('/fonts/BpdotsBold-jrOO.otf') format('opentype');
+  src: url('/fonts/Bpdots-Rp3M.ttf') format('truetype');
+  font-weight: 700;
   font-display: swap;
 }
 
