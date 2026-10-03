@@ -21,15 +21,14 @@ body,
 }
 
 .app-shell {
-  display: grid;
-  align-items: center;
   min-height: 100vh;
   padding: 32px;
 }
 
 .home-section {
   display: grid;
-  gap: 32px;
+  min-height: calc(100vh - 64px);
+  position: relative;
 }
 
 .big-header {
@@ -44,17 +43,25 @@ body,
   display: flex;
   align-items: flex-start;
   flex-direction: column;
-  gap: 10px;
-  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  gap: 14px;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(2rem, 4vw, 4rem);
+  line-height: 0.95;
+  text-align: center;
 }
 
 .link {
   color: inherit;
-  text-underline-offset: 0.16em;
+  text-decoration: none;
 }
 
 .link:hover {
+  text-decoration: underline;
   text-decoration-thickness: 2px;
+  text-underline-offset: 0.16em;
 }
 
 @media (max-width: 480px) {
