@@ -8,6 +8,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+@font-face {
+  font-family: 'BP Dots';
+  src: url('/fonts/BpdotsBold-jrOO.otf') format('opentype');
+  font-display: swap;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -36,6 +42,7 @@ body,
 
 .big-header {
   margin: 0;
+  font-family: 'BP Dots', Arial, Helvetica, sans-serif;
   font-size: clamp(3rem, 12vw, 9rem);
   font-weight: 700;
   letter-spacing: 0.02em;
