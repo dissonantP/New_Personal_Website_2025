@@ -36,9 +36,11 @@ body,
 }
 
 .home-section {
+  --home-item-gap: clamp(20px, 3vh, 36px);
+
   display: grid;
   justify-items: center;
-  gap: clamp(32px, 6vh, 72px);
+  gap: var(--home-item-gap);
   transform: translateY(-7vh);
 }
 
@@ -55,7 +57,7 @@ body,
   display: flex;
   align-items: center;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--home-item-gap);
   font-size: clamp(2rem, 4vw, 4rem);
   font-family: 'Bold Type', Arial, Helvetica, sans-serif;
   font-weight: 700;
@@ -65,9 +67,7 @@ body,
 
 .link {
   color: #0000ee;
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.16em;
+  text-decoration: none;
 }
 
 .link:hover {
