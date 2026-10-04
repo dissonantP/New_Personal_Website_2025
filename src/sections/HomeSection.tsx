@@ -11,7 +11,7 @@ type HomeSectionProps = {
 };
 
 export function HomeSection({ name, navigation, activeHref, onNavigate }: HomeSectionProps) {
-  const isCompact = Boolean(activeHref);
+  const isActive = Boolean(activeHref);
 
   function handleNavigation(event: MouseEvent<HTMLAnchorElement>, href: string) {
     event.preventDefault();
@@ -19,7 +19,7 @@ export function HomeSection({ name, navigation, activeHref, onNavigate }: HomeSe
   }
 
   return (
-    <section className={`home-section${isCompact ? ' home-section--compact' : ''}`} aria-label="Introduction">
+    <section className={`home-section${isActive ? ' home-section--active' : ''}`} aria-label="Introduction">
       <BigHeader>
         <Link className="home-title-link" href="/" onClick={(event) => handleNavigation(event, '/')}>
           {name}

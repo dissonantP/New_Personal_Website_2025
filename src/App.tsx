@@ -38,11 +38,7 @@ export function App() {
         onNavigate={navigate}
       />
       {activeItem && (
-        <section className="page-content" aria-labelledby="page-content-title">
-          <h2 id="page-content-title" className="page-content__title">
-            {activeItem.label}
-          </h2>
-        </section>
+        <section className="page-content" aria-label={`${activeItem.label} content`} />
       )}
     </main>
   );
