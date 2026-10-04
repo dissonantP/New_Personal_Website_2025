@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { siteNavigation } from './content/navigation';
 import { HomeSection } from './sections/HomeSection';
+import { PageContent } from './sections/PageContent';
 
 function getPathname() {
   return window.location.pathname;
@@ -38,7 +39,7 @@ export function App() {
         onNavigate={navigate}
       />
       {activeItem && (
-        <section className="page-content" aria-label={`${activeItem.label} content`} />
+        <PageContent label={activeItem.label} content={activeItem.content} />
       )}
     </main>
   );

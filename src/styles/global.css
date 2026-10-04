@@ -116,6 +116,20 @@ body,
   margin: calc(50vh + clamp(40px, 7vw, 100px)) 32px 32px;
 }
 
+.page-content__body {
+  max-width: 60ch;
+  font-size: clamp(1.125rem, 2vw, 1.5rem);
+  line-height: 1.4;
+}
+
+.page-content__body p {
+  margin: 0;
+}
+
+.page-content__body p + p {
+  margin-top: 1em;
+}
+
 @keyframes arrange-navigation {
   from {
     opacity: 0;
