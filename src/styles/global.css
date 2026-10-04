@@ -41,7 +41,7 @@ body,
 
 .home-section {
   --home-active-navigation-space: clamp(100px, 12.5vw, 194px);
-  --home-item-gap: clamp(20px, 3vh, 36px);
+  --home-item-gap: clamp(14px, 1.8vh, 22px);
 
   display: grid;
   justify-items: center;
@@ -102,6 +102,7 @@ body,
 }
 
 .link[aria-current='page'] {
+  color: #111111;
   text-decoration: underline;
   text-decoration-thickness: 0.08em;
   text-underline-offset: 0.13em;
@@ -115,7 +116,7 @@ body,
 
 .page-content {
   min-height: calc(50vh - 120px);
-  margin: calc(50vh + clamp(8px, 1.5vw, 24px)) 32px 32px;
+  margin: calc(50vh - clamp(32px, 4vw, 64px)) 32px 32px;
 }
 
 .page-content__body {
