@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { siteNavigation } from './content/navigation';
+import { ArtPage } from './pages/ArtPage';
+import { MusicPage } from './pages/MusicPage';
+import { TechnologyPage } from './pages/TechnologyPage';
 import { HomeSection } from './sections/HomeSection';
-import { PageContent } from './sections/PageContent';
 
 function getPathname() {
   return window.location.pathname;
@@ -38,9 +40,9 @@ export function App() {
         activeHref={activeItem?.href}
         onNavigate={navigate}
       />
-      {activeItem && (
-        <PageContent label={activeItem.label} content={activeItem.content} />
-      )}
+      {pathname === '/technology' && <TechnologyPage />}
+      {pathname === '/music' && <MusicPage />}
+      {pathname === '/art' && <ArtPage />}
     </main>
   );
 }
