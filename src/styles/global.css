@@ -102,7 +102,9 @@ body,
 }
 
 .link[aria-current='page'] {
-  color: #d20d9a;
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.13em;
 }
 
 .home-title-link,
@@ -113,7 +115,7 @@ body,
 
 .page-content {
   min-height: calc(50vh - 120px);
-  margin: calc(50vh + clamp(40px, 7vw, 100px)) 32px 32px;
+  margin: calc(50vh + clamp(8px, 1.5vw, 24px)) 32px 32px;
 }
 
 .page-content__body {
