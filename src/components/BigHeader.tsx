@@ -1,11 +1,9 @@
-import type { HTMLAttributes, PropsWithChildren } from 'react';
+import type { ReactNode } from 'react';
 
-type BigHeaderProps = PropsWithChildren<HTMLAttributes<HTMLHeadingElement>>;
+type BigHeaderProps = {
+  children: ReactNode;
+};
 
-export function BigHeader({ children, className = '', ...props }: BigHeaderProps) {
-  return (
-    <h1 className={`big-header ${className}`.trim()} {...props}>
-      {children}
-    </h1>
-  );
+export function BigHeader({ children }: BigHeaderProps) {
+  return <h1 className="big-header">{children}</h1>;
 }

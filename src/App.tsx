@@ -1,102 +1,48 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box } from './components/Box';
-import { P5Home } from './components/P5Home';
-import { ArtSection } from './sections/ArtSection';
-import { PortfolioSection } from './sections/PortfolioSection';
-import { MusicSection } from './sections/MusicSection';
-import { ServicesSection } from './sections/ServicesSection';
-import type { SiteSectionId } from './navigation/types';
+import { useEffect, useState } from 'react';
+import { siteNavigation } from './content/navigation';
+import { ArtPage } from './pages/ArtPage';
+import { MusicPage } from './pages/MusicPage';
+import { TechnologyPage } from './pages/TechnologyPage';
+import { HomeSection } from './sections/HomeSection';
 
-const SECTION_PATHS: Record<SiteSectionId, string> = {
-  home: '/',
-  portfolio: '/portfolio',
-  services: '/services',
-  art: '/art',
-  music: '/music',
-};
-
-function getSectionFromPath(pathname: string): SiteSectionId {
-  const match = Object.entries(SECTION_PATHS).find(([, path]) => path === pathname);
-
-  return (match?.[0] as SiteSectionId | undefined) ?? 'home';
+function getPathname() {
+  return window.location.pathname;
 }
 
 export function App() {
-  const [section, setSection] = useState<SiteSectionId>(() => getSectionFromPath(window.location.pathname));
-  const [isFading, setIsFading] = useState(false);
-  const timeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const root = document.documentElement;
-
-    function updateViewportHeight() {
-      const height = Math.round(window.visualViewport?.height ?? window.innerHeight);
-      root.style.setProperty('--app-viewport-height', `${height}px`);
-    }
-
-    updateViewportHeight();
-    window.addEventListener('resize', updateViewportHeight);
-    window.visualViewport?.addEventListener('resize', updateViewportHeight);
-
-    return () => {
-      window.removeEventListener('resize', updateViewportHeight);
-      window.visualViewport?.removeEventListener('resize', updateViewportHeight);
-    };
-  }, []);
+  const [pathname, setPathname] = useState(getPathname);
+  const activeItem = siteNavigation.find((item) => item.href === pathname);
 
   useEffect(() => {
     function handlePopState() {
-      setSection(getSectionFromPath(window.location.pathname));
-      setIsFading(false);
+      setPathname(getPathname());
     }
 
     window.addEventListener('popstate', handlePopState);
 
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-      if (timeoutRef.current) {
-        window.clearTimeout(timeoutRef.current);
-      }
-    };
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const navigate = useCallback((nextSection: SiteSectionId) => {
-    if (nextSection === section) {
+  function navigate(href: string) {
+    if (href === pathname) {
       return;
     }
 
-    setIsFading(true);
-    timeoutRef.current = window.setTimeout(() => {
-      setSection(nextSection);
-      setIsFading(false);
-      window.history.pushState(null, '', SECTION_PATHS[nextSection]);
-    }, 220);
-  }, [section]);
-
-  function renderSection() {
-    switch (section) {
-      case 'portfolio':
-        return <PortfolioSection onNavigate={navigate} />;
-      case 'services':
-        return <ServicesSection onNavigate={navigate} />;
-      case 'art':
-        return <ArtSection onBack={() => navigate('home')} />;
-      case 'music':
-        return <MusicSection onBack={() => navigate('home')} />;
-      default:
-        return null;
-    }
+    window.history.pushState(null, '', href);
+    setPathname(href);
   }
 
   return (
-    <main className="app-shell">
-      <Box
-        className={`intro ${section === 'home' ? 'home-intro' : 'scene-intro'} ${
-          isFading ? 'intro-fading' : ''
-        }`}
-      >
-        {section === 'home' ? <P5Home onNavigate={navigate} /> : renderSection()}
-      </Box>
+    <main className={`app-shell${activeItem ? ' app-shell--section' : ''}`}>
+      <HomeSection
+        name="MAX PLEANER"
+        navigation={siteNavigation}
+        activeHref={activeItem?.href}
+        onNavigate={navigate}
+      />
+      {pathname === '/technology' && <TechnologyPage />}
+      {pathname === '/music' && <MusicPage />}
+      {pathname === '/art' && <ArtPage />}
     </main>
   );
 }
