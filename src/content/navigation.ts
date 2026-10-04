@@ -6,7 +6,7 @@ export type NavigationItem = {
 
 export const siteNavigation: NavigationItem[] = [
   {
-    label: 'Technology',
+    label: 'Tech',
     href: '/technology',
     content: [
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sit amet sem ac arcu tincidunt egestas.',
