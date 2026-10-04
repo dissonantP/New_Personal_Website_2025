@@ -153,6 +153,7 @@ body,
   }
 
   .page-content {
+    margin-top: calc(var(--section-anchor) - clamp(44px, 4vw, 48px));
     margin-right: 24px;
     margin-left: 24px;
   }
