@@ -1,0 +1,25 @@
+# Builds every PR, so the Fable review gate (proteanP/services-directory StackUpdate)
+# only merges dependency updates that still build. Runs with a read-only token.
+name: pr-build
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run build
