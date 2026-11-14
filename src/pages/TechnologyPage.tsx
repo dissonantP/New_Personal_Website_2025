@@ -18,10 +18,11 @@ const contactLinks = [
 export function TechnologyPage() {
   return (
     <PageContent label="Tech">
-      <Claim caption="Software · 3D · tools · music · art">I make things with code.</Claim>
-      <Claim caption="Started full-stack at small startups, then moved into 3D, CAD and manufacturing.">
-        I've shipped software professionally since 2013.
-      </Claim>
+      <Claim>I make things with code.</Claim>
+      <p>
+        I've shipped software professionally since 2013. Started full-stack at small startups, then moved
+        into 3D, CAD and manufacturing.
+      </p>
       <CapabilityList items={capabilities} />
       <ContactLinks links={contactLinks} />
     </PageContent>

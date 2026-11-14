@@ -161,21 +161,12 @@ a:hover {
   }
 }
 
-.claim + .claim {
-  margin-top: 1.75em;
-}
-
-.page-content__body .claim__headline {
+.page-content__body .claim {
+  margin-bottom: 0.6em;
   font-family: 'Bold Type', Arial, Helvetica, sans-serif;
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-size: clamp(2rem, 5vw, 3.25rem);
   font-weight: 700;
   line-height: 1.05;
-}
-
-.page-content__body .claim__caption {
-  margin-top: 0.5em;
-  color: #b3b3b3;
-  font-size: clamp(1rem, 1.6vw, 1.2rem);
 }
 
 .capability-list {
