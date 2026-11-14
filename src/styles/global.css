@@ -160,3 +160,41 @@ a:hover {
     margin-top: 32px;
   }
 }
+
+.claim + .claim {
+  margin-top: 1.75em;
+}
+
+.page-content__body .claim__headline {
+  font-family: 'Bold Type', Arial, Helvetica, sans-serif;
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.page-content__body .claim__caption {
+  margin-top: 0.5em;
+  color: #b3b3b3;
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+}
+
+.capability-list {
+  margin: 2.25em 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 2px solid #ffffff;
+}
+
+.capability-list li {
+  padding: 0.6em 0;
+  border-bottom: 2px solid #ffffff;
+}
+
+.page-content__body .contact-links {
+  display: flex;
+  gap: 1.5em;
+  margin-top: 2em;
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem);
+  font-family: 'Bold Type', Arial, Helvetica, sans-serif;
+  font-weight: 700;
+}
