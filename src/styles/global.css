@@ -161,14 +161,6 @@ a:hover {
   }
 }
 
-.page-content__body .claim {
-  margin-bottom: 0.6em;
-  font-family: 'Bold Type', Arial, Helvetica, sans-serif;
-  font-size: clamp(2rem, 5vw, 3.25rem);
-  font-weight: 700;
-  line-height: 1.05;
-}
-
 .capability-list {
   margin: 2.25em 0 0;
   padding: 0;
