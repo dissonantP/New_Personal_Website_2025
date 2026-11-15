@@ -24,4 +24,5 @@ export const pageText = `Hi I am Max. I live in the bay area and work as a softw
 #### links
 
 - [tech portfolio](https://obscure.page)
-- [linkedin](https://linkedin.com/in/maxpleaner)`;
+- [linkedin](https://linkedin.com/in/maxpleaner)
+- [email](mailto:maxpleaner@gmail.com)`;
