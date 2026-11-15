@@ -33,4 +33,5 @@ Error generating stack: `+a.message+`
 #### links
 
 - [tech portfolio](https://obscure.page)
-- [linkedin](https://linkedin.com/in/maxpleaner)`;function yd(){return wt.jsx("main",{className:"app-shell",children:wt.jsx(cd,{text:id})})}td.createRoot(document.getElementById("root")).render(wt.jsx(W1.StrictMode,{children:wt.jsx(yd,{})}));
+- [linkedin](https://linkedin.com/in/maxpleaner)
+- [email](mailto:maxpleaner@gmail.com)`;function yd(){return wt.jsx("main",{className:"app-shell",children:wt.jsx(cd,{text:id})})}td.createRoot(document.getElementById("root")).render(wt.jsx(W1.StrictMode,{children:wt.jsx(yd,{})}));
