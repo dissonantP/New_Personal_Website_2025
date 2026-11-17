@@ -17,20 +17,19 @@
 }
 
 html,
-body,
-#root {
+body {
   min-width: 320px;
   margin: 0;
 }
 
-.app-shell {
+main {
   display: grid;
   place-items: center;
   min-height: 100vh;
   padding: 32px 16px;
 }
 
-.text-page {
+pre {
   max-width: 80ch;
   margin: 0;
   font-family: 'Topaz', ui-monospace, Menlo, Consolas, monospace;
@@ -52,7 +51,7 @@ a:hover {
   color: #ffffff;
 }
 
-.text-page__heading {
+strong {
   font-weight: 700;
   font-synthesis: weight; /* Topaz has no bold face */
 }
