@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: Deploy
 
 on:
   push:
@@ -14,29 +14,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
+      # Serve the home page for any unknown path, as the old Vite build did.
+      - name: Add 404 page
+        run: cp site/index.html site/404.html
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: ./dist
+          publish_dir: ./site
           cname: maxpleaner.com

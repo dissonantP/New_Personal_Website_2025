@@ -1,19 +1,9 @@
-This is a personal website.
-My old website is at https://maxpleaner.com
-I have multiple identities:
-- Software (this is what I do professionally)
-- Creative Technology
-- Music
+This is Max's personal website, live at https://maxpleaner.com.
 
-The website should be professional and modern, taking influence from brutalism, a combination of retro / technology theme and creative-agency / contemporary design.
+It is plain static HTML and CSS with no build step and no dependencies: `site/index.html`, `site/style.css` and the Topaz font in `site/fonts/`. Keep it that way; don't add a framework, bundler or package.json.
 
-In terms of development, it's made with React, Typescript, and Vite
+The whole page is one plain-text `<pre>`. Section headings are `<strong>` and links are ordinary `<a>` tags.
 
-It's extremely important that front end components are built in a modular way, with clean code.
-CSS should never be inlined into the JSX
-We should be using standard components like Button, Box, SmallHeader, BigHeader, Link, etc that we define ourself, so we can change one place to effect the whole site.
-These basic components should be composed into bigger components like "ProjectCard", use-cases will emerge as we do development.
+Pushing to `main` deploys `site/` to the `gh-pages` branch with GitHub Actions (`.github/workflows/deploy.yml`).
 
-We are in a git repo and we should commit regularly as we develop.
-
-Feel free to update AGENTS.md with learnings and patterns that emerge during development.
+Preview locally with any static server pointed at `site/`, e.g. `python3 -m http.server -d site`.
